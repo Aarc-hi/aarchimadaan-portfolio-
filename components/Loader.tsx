@@ -5,7 +5,7 @@ export const Loader: React.FC = () => {
   const [count, setCount] = useState(0);
   const [textIndex, setTextIndex] = useState(0);
   
-  const words = ["INITIALIZING", "LOADING ASSETS", "BREWING CHAOS", "ALIGNING PIXELS", "READY TO LAUNCH"];
+  const words = ["LOADING", "LOADING ASSETS", "BREWING CHAOS", "ALIGNING PIXELS", "READY TO LAUNCH"];
 
   useEffect(() => {
     // Counter logic
@@ -51,7 +51,7 @@ export const Loader: React.FC = () => {
             <div className="w-2 h-2 bg-cobalt rounded-full animate-pulse"/>
             <span>Aarchi Madaan</span>
         </div>
-        <span>Portfolio © 2025</span>
+        <span>Raw Studio © 2025</span>
       </div>
 
       {/* Center Kinetic Content */}
