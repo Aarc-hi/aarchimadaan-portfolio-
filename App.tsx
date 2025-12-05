@@ -1,0 +1,424 @@
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { Moon, Sun, ArrowRight, Sparkles, Star, Zap } from 'lucide-react';
+import { ViewState } from './types';
+import { EXPERIENCES, PROJECTS, SKILLS } from './data';
+import { FloatingNav } from './components/FloatingNav';
+import { Loader } from './components/Loader';
+import { Background } from './components/Background';
+import Aarchi from './assets/aarchi.jpg';
+
+const pageVariants: Variants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "circOut" } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
+};
+
+const marqueeVariants: Variants = {
+  animate: {
+    x: [0, -1000],
+    transition: {
+      x: {
+        repeat: Infinity,
+        repeatType: "loop",
+        duration: 20,
+        ease: "linear",
+      },
+    },
+  },
+};
+
+const App: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<ViewState>('HOME');
+  const [darkMode, setDarkMode] = useState(false);
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view]);
+
+  if (loading) return <Loader />;
+
+  return (
+    <div className="min-h-screen relative font-sans selection:bg-cobalt selection:text-white overflow-hidden">
+      <Background />
+
+      {/* Top Bar */}
+      <nav className="fixed top-0 left-0 w-full p-6 md:p-10 flex justify-between items-start z-40 mix-blend-difference text-white pointer-events-none">
+        <button 
+          onClick={() => setView('HOME')} 
+          className="flex flex-col items-start group pointer-events-auto"
+        >
+          <motion.span 
+            whileHover={{ scale: 1.1, rotate: -2 }}
+            className="font-display font-black text-2xl tracking-tighter leading-none"
+          >
+            AARCHI MADAAN
+          </motion.span>
+          <span className="text-xs font-mono bg-white text-black px-1 mt-1 transform group-hover:rotate-2 transition-transform"></span>
+        </button>
+
+        <button 
+          onClick={() => setDarkMode(!darkMode)}
+          className="pointer-events-auto hover:scale-110 transition-transform bg-white text-black p-2 rounded-full"
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </nav>
+
+      <FloatingNav currentView={view} setView={setView} />
+
+      <main className="relative z-10 w-full min-h-screen pt-32 pb-32 px-4 md:px-12 flex flex-col items-center">
+        <AnimatePresence mode="wait">
+          
+          {/* HOME VIEW */}
+          {view === 'HOME' && (
+            <motion.div 
+              key="home" 
+              variants={pageVariants} 
+              initial="initial" 
+              animate="animate" 
+              exit="exit" 
+              className="w-full max-w-7xl flex flex-col justify-center min-h-[60vh]"
+            >
+               <div className="relative">
+                 <div className="relative z-10">
+                   <h1 className="text-[14vw] leading-[0.8] font-display font-black tracking-tighter uppercase mix-blend-exclusion dark:mix-blend-normal">
+                     <motion.div 
+                       initial={{ x: -100, opacity: 0 }} 
+                       animate={{ x: 0, opacity: 1 }}
+                       transition={{ duration: 0.8, delay: 0.2 }}
+                       className="text-stroke-thick md:text-stroke hover:text-ink dark:hover:text-ink-light transition-colors duration-500"
+                     >
+                       Interaction
+                     </motion.div>
+                     <motion.div 
+                        initial={{ x: 100, opacity: 0 }} 
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="flex items-center gap-4"
+                     >
+                       <span className="text-cobalt">Designer</span>
+                       <Star className="w-[8vw] h-[8vw] animate-spin-slow text-ink dark:text-ink-light" />
+                     </motion.div>
+                   </h1>
+                 </div>
+                 
+                 <div className="mt-16 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
+                    <div className="md:col-span-6 md:col-start-7 bg-paper/80 dark:bg-paper-dark/80 backdrop-blur-sm p-6 border-2 border-current shadow-hard transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                      <p className="text-2xl md:text-4xl font-display font-medium leading-tight mb-6">
+                        Hi! I'm Aarchi. I design <span className="underline decoration-wavy decoration-cobalt">experiences</span> that pop, snap, and crackle.
+                      </p>
+                      
+                      <div className="flex gap-4">
+                        <motion.button 
+                          whileHover={{ scale: 1.05, rotate: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setView('PROJECTS')}
+                          className="px-8 py-3 bg-cobalt text-white font-mono font-bold text-sm uppercase shadow-hard hover:shadow-none transition-all border-2 border-transparent"
+                        >
+                          See Works
+                        </motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.05, rotate: 2 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setView('CONTACT')}
+                          className="px-8 py-3 bg-transparent border-2 border-current font-mono font-bold text-sm uppercase hover:bg-current hover:text-paper transition-colors"
+                        >
+                          Say Hello
+                        </motion.button>
+                      </div>
+                    </div>
+                 </div>
+               </div>
+            </motion.div>
+          )}
+
+          {/* ABOUT VIEW */}
+          {view === 'ABOUT' && (
+            <motion.div key="about" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-6xl">
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                 <div className="order-2 md:order-1 relative">
+                    {/* Decorative Elements */}
+                    <motion.div animate={{ rotate: 10 }} className="absolute -top-12 -left-12 text-cobalt opacity-20 hidden md:block">
+                        <Sparkles size={120} />
+                    </motion.div>
+
+                    <div className="space-y-2">
+                        <span className="inline-block bg-cobalt text-white px-3 py-1 font-mono text-sm font-bold rotate-2 transform origin-left">02. WHO AM I?</span>
+                        <h2 className="text-6xl md:text-8xl font-display font-black tracking-tighter leading-[0.9] mb-8">
+                          The Architect<br/> of <span className="text-transparent text-stroke-thick">Pixels</span>
+                        </h2>
+                    </div>
+                    
+                    <div className="bg-white dark:bg-ink p-8 border-2 border-current shadow-hard text-lg md:text-xl font-medium leading-relaxed rotate-1 hover:rotate-0 transition-transform">
+                       <p className="mb-6">
+                         I'm a <strong className="text-cobalt">Creative & Detail-Oriented Interaction Designer</strong> with a penchant for breaking grid systems (respectfully). 
+                       </p>
+                       <p>
+                         Proficient in Adobe Creative Suite, UI design, and visual storytelling. My goal? Leverage design skills to create chaos that makes sense.
+                       </p>
+                    </div>
+
+                    <div className="mt-12 flex gap-4 flex-wrap">
+                        <div className="bg-ink dark:bg-ink-light text-paper dark:text-paper-dark px-4 py-2 font-mono text-sm border-2 border-transparent -rotate-2">
+                            Bachelor in Design @ Anant National University
+                        </div>
+                        <div className="bg-transparent border-2 border-current px-4 py-2 font-mono text-sm font-bold rotate-1">
+                            8.3/10 GPA
+                        </div>
+                    </div>
+                 </div>
+
+                 <div className="order-1 md:order-2 flex justify-center">
+                    <div className="relative w-full max-w-md aspect-[3/4]">
+                        <div className="absolute inset-0 bg-cobalt translate-x-4 translate-y-4 border-2 border-black dark:border-white"></div>
+                        <div className="absolute inset-0 bg-white dark:bg-gray-800 border-2 border-current flex items-center justify-center overflow-hidden">
+
+                           <div className="text-center p-8">
+                            
+                           </div>
+
+                           <img 
+                            src={Aarchi}
+                            alt="Portrait" 
+                            className="absolute inset-0 object-cover w-full h-full grayscale hover:grayscale-0 transition-all duration-500 opacity-80 hover:opacity-100 mix-blend-multiply dark:mix-blend-normal"
+                           />
+                        </div>
+
+                        <div className="absolute -bottom-6 -right-6 bg-paper dark:bg-paper-dark border-2 border-current px-4 py-2 font-display font-bold text-xl rotate-6 shadow-hard-sm z-20">
+                            Based in New Delhi
+                        </div>
+                    </div>
+                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* EXPERIENCE VIEW */}
+          {view === 'EXPERIENCE' && (
+            <motion.div key="experience" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-4xl">
+              <div className="text-center mb-16 relative">
+                 <h2 className="text-6xl md:text-9xl font-display font-black tracking-tighter uppercase text-transparent text-stroke-thick opacity-20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full whitespace-nowrap pointer-events-none">
+                    Work History
+                 </h2>
+                 <h2 className="text-5xl md:text-7xl font-display font-black tracking-tighter uppercase relative z-10">
+                    The Timeline
+                 </h2>
+              </div>
+
+              <div className="space-y-12">
+                {EXPERIENCES.map((exp, idx) => (
+                  <motion.div 
+                    key={exp.id}
+                    initial={{ x: idx % 2 === 0 ? -50 : 50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="group relative bg-paper dark:bg-paper-dark border-2 border-current p-8 shadow-hard hover:shadow-hard-lg hover:-translate-y-1 transition-all duration-300"
+                  >
+                    <div className="absolute -top-4 -right-4 bg-cobalt text-white px-4 py-1 font-mono text-sm font-bold rotate-3 group-hover:rotate-6 transition-transform">
+                        {exp.period}
+                    </div>
+
+                    <h3 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 leading-none">
+                        {exp.role}
+                    </h3>
+                    <div className="text-xl font-serif italic mb-6 border-b-2 border-current inline-block pb-1">
+                        {exp.company}
+                    </div>
+
+                    <ul className="space-y-2 font-medium">
+                        {exp.points.map((pt, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                                <ArrowRight size={16} className="mt-1.5 text-cobalt shrink-0" />
+                                <span>{pt}</span>
+                            </li>
+                        ))}
+                    </ul>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* PROJECTS VIEW - REDESIGNED: TEXT ONLY, FUN */}
+          {view === 'PROJECTS' && (
+            <motion.div key="projects" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-6xl">
+              <div className="mb-12 flex items-baseline gap-4">
+                 <h2 className="text-6xl md:text-8xl font-display font-black tracking-tighter uppercase">Selected Works</h2>
+                 <span className="font-mono text-xl animate-bounce">↓</span>
+              </div>
+              
+              <div className="border-t-4 border-current">
+                {PROJECTS.map((project, index) => (
+                  <motion.div 
+                    key={project.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="relative border-b-4 border-current py-12 md:py-20 group cursor-pointer overflow-hidden"
+                    onMouseEnter={() => setHoveredProject(project.id)}
+                    onMouseLeave={() => setHoveredProject(null)}
+                  >
+                    {/* Background fill animation */}
+                    <div className="absolute inset-0 bg-cobalt translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-0"></div>
+
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-baseline justify-between gap-4 px-4">
+                        <h3 className="text-5xl md:text-8xl font-display font-black uppercase tracking-tighter text-ink dark:text-ink-light group-hover:text-white transition-colors duration-300">
+                          {project.title}
+                        </h3>
+                        
+                        <div className="flex flex-col items-end">
+                            <span className="font-mono text-sm md:text-lg font-bold group-hover:text-white transition-colors">{project.date}</span>
+                            <div className="flex gap-2 mt-2">
+                                {project.tech.map(t => (
+                                    <span key={t} className="text-xs border border-current px-2 py-0.5 rounded-full bg-paper dark:bg-paper-dark group-hover:border-white group-hover:bg-transparent group-hover:text-white transition-colors">
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reveal Description on Hover - Fun Slide */}
+                    <div className="relative z-10 px-4 mt-0 h-0 group-hover:h-auto group-hover:mt-8 overflow-hidden transition-all duration-500">
+                        <p className="text-white text-xl md:text-2xl font-sans max-w-3xl leading-tight">
+                            {project.description.join(' ')}
+                        </p>
+                        <div className="mt-6 flex items-center gap-2 text-white font-mono uppercase text-sm font-bold tracking-widest">
+                            <span className="w-8 h-[2px] bg-white"></span>
+                            View Case Study
+                        </div>
+                    </div>
+
+                    {/* Decorative Icon */}
+                    <Zap className="absolute right-12 top-1/2 -translate-y-1/2 w-32 h-32 text-transparent stroke-current stroke-1 opacity-0 group-hover:opacity-20 group-hover:rotate-12 transition-all duration-500 pointer-events-none" />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* SKILLS VIEW - MARQUEE FUN */}
+          {view === 'SKILLS' && (
+            <motion.div key="skills" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full overflow-hidden py-12">
+               <h2 className="text-center text-4xl font-mono uppercase tracking-widest mb-16">The Arsenal</h2>
+
+               {/* Design Skills Marquee */}
+               <div className="relative flex overflow-x-hidden mb-12 bg-cobalt py-6 transform -rotate-2 scale-110">
+                 <motion.div className="flex whitespace-nowrap" variants={marqueeVariants} animate="animate">
+                   {[...SKILLS.design, ...SKILLS.design, ...SKILLS.design].map((skill, i) => (
+                     <span key={i} className="text-6xl md:text-8xl font-display font-black text-white mx-8 uppercase">
+                       {skill} <span className="text-transparent text-stroke-thick mx-4">•</span>
+                     </span>
+                   ))}
+                 </motion.div>
+               </div>
+
+                {/* Tools Skills Marquee (Reverse) */}
+                <div className="relative flex overflow-x-hidden mb-12 bg-ink dark:bg-ink-light py-6 transform rotate-1 scale-110">
+                 <motion.div 
+                    className="flex whitespace-nowrap" 
+                    animate={{ x: [-1000, 0] }} 
+                    transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+                 >
+                   {[...SKILLS.tools, ...SKILLS.tools, ...SKILLS.tools].map((skill, i) => (
+                     <span key={i} className="text-6xl md:text-8xl font-display font-black text-paper dark:text-paper-dark mx-8 uppercase">
+                       {skill} <span className="text-transparent text-stroke-thick mx-4">*</span>
+                     </span>
+                   ))}
+                 </motion.div>
+               </div>
+
+                <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mt-24 px-4">
+                    <div className="border-2 border-current p-8 shadow-hard hover:bg-paper-dark hover:text-paper hover:shadow-none transition-all">
+                        <h3 className="font-mono text-xl mb-6 uppercase border-b-2 border-current inline-block">Research</h3>
+                        <div className="flex flex-wrap gap-3">
+                            {SKILLS.research.map(s => (
+                                <span key={s} className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-md font-medium text-lg">{s}</span>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="border-2 border-current p-8 shadow-hard hover:bg-paper-dark hover:text-paper hover:shadow-none transition-all">
+                        <h3 className="font-mono text-xl mb-6 uppercase border-b-2 border-current inline-block">Soft Skills</h3>
+                        <div className="flex flex-wrap gap-3">
+                            {SKILLS.soft.map(s => (
+                                <span key={s} className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-md font-medium text-lg">{s}</span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+          )}
+
+          {/* CONTACT VIEW */}
+          {view === 'CONTACT' && (
+            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-5xl flex flex-col items-center py-12 md:py-24">
+              <div className="text-center mb-16 relative">
+                 <motion.div 
+                    animate={{ rotate: [0, 10, -10, 0] }} 
+                    transition={{ repeat: Infinity, duration: 5 }}
+                    className="absolute -top-20 -right-12 md:-right-24"
+                 >
+                     <img src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=Love" alt="sticker" className="w-32 h-32" />
+                 </motion.div>
+
+                <h2 className="text-[12vw] leading-[0.8] font-display font-black uppercase tracking-tighter">
+                  Let's<br/>
+                  <span className="text-cobalt">Mingle</span>
+                </h2>
+              </div>
+
+              <motion.a 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href="mailto:aarchimadaan@gmail.com"
+                className="relative inline-block group cursor-pointer"
+              >
+                <div className="absolute inset-0 bg-black dark:bg-white translate-x-4 translate-y-4 rounded-xl"></div>
+                <div className="relative bg-cobalt text-white border-2 border-black dark:border-white px-8 md:px-16 py-8 md:py-10 text-3xl md:text-5xl font-display font-bold tracking-tight rounded-xl group-hover:-translate-y-2 group-hover:-translate-x-2 transition-transform">
+                  aarchimadaan@gmail.com
+                </div>
+              </motion.a>
+              
+              <div className="mt-16 flex flex-col md:flex-row gap-12 text-center md:text-left">
+                 <div className="space-y-2">
+                    <span className="font-mono text-xs uppercase opacity-50 block">Call Me Maybe</span>
+                    <a href="tel:9289664869" className="text-2xl font-bold hover:text-cobalt transition-colors">+91 9289664869</a>
+                 </div>
+                 <div className="space-y-2">
+                    <span className="font-mono text-xs uppercase opacity-50 block">Stalk Me Professionally</span>
+                    <a href="https://www.linkedin.com/in/aarchi-madaan-4634a32b5/" className="text-2xl font-bold hover:text-cobalt transition-colors">LinkedIn Profile ↗</a>
+                 </div>
+              </div>
+
+              <footer className="mt-32 w-full flex justify-between border-t-2 border-current pt-6 font-mono text-xs uppercase tracking-widest opacity-50">
+                <span>New Delhi, India</span>
+                <span className="animate-pulse">Open to work</span>
+                <span>© 2025 Raw Studio</span>
+              </footer>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+};
+
+export default App;
