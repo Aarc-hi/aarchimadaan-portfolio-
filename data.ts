@@ -8,7 +8,6 @@ export const EXPERIENCES: Experience[] = [
     period: 'Dec 2024 - Jan 2025',
     points: [
       'Created social media content and graphics for the organization.',
-      'Designed business cards and other print collateral.',
       'Enhanced skills in Photoshop, Illustrator, and Figma.',
       'Contributed to UI design focusing on layout and UX improvements.'
     ]
