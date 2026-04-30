@@ -1,4 +1,4 @@
-export type ViewState = 'HOME' | 'ABOUT' | 'EXPERIENCE' | 'PROJECTS' | 'SKILLS' | 'CONTACT';
+export type ViewState = 'HOME' | 'identity' | 'PROJECTS' | 'CONTACT' | 'project-detail';
 
 export interface Experience {
   id: string;
@@ -14,13 +14,22 @@ export interface Project {
   date: string;
   description: string[];
   tech: string[];
+  year: string;
+  category: string;
+  problemStatement?: string;
+  concept?: string;
+  researchQuestion?: string;
+  images?: string[];
+  mockups?: string[];
+  pages?: string[];
+  youtubeId?: string;
+  videoSrc?: string;
+  coverImage?: string;
 }
 
 export const NAV_ITEMS: { id: ViewState; label: string }[] = [
   { id: 'HOME', label: '01. Intro' },
-  { id: 'ABOUT', label: '02. Identity' },
-  { id: 'EXPERIENCE', label: '03. Timeline' },
-  { id: 'PROJECTS', label: '04. Works' },
-  { id: 'SKILLS', label: '05. Arsenal' },
-  { id: 'CONTACT', label: '06. Connect' },
+  { id: 'identity', label: '02. Identity' },
+  { id: 'PROJECTS', label: '03. Works' },
+  { id: 'CONTACT', label: '04. Connect' },
 ];

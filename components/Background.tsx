@@ -8,15 +8,7 @@ export const Background: React.FC = () => {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8882_1px,transparent_1px),linear-gradient(to_bottom,#8882_1px,transparent_1px)] bg-[size:60px_60px] opacity-[0.2]" />
       
       {/* Floating Fun Shapes */}
-      <motion.div 
-        animate={{ rotate: 360 }}
-        transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[10%] left-[5%] text-cobalt/10 dark:text-cobalt/20"
-      >
-        <svg width="200" height="200" viewBox="0 0 100 100" fill="currentColor">
-           <path d="M50 0L61 35L98 35L68 57L79 91L50 70L21 91L32 57L2 35L39 35L50 0Z" />
-        </svg>
-      </motion.div>
+      {/* Floating Star Removed */}
 
       <motion.div 
         animate={{ y: [0, -50, 0], rotate: [0, 10, -10, 0] }}

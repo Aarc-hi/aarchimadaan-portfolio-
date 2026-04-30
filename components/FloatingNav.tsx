@@ -32,8 +32,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ currentView, setView }
                     setView(item.id);
                     setIsOpen(false);
                   }}
-                  whileHover={{ x: -10 }}
-                  className={`group relative flex items-center justify-between w-72 px-6 py-4 border-2 border-black dark:border-white transition-all duration-200 shadow-hard
+                  className={`group relative flex items-center justify-between w-72 px-6 py-4 border-2 border-black dark:border-white transition-all duration-200 shadow-hard hover:-translate-x-2.5 transition-transform
                     ${
                       currentView === item.id
                         ? 'bg-cobalt text-white'
