@@ -29,8 +29,8 @@ export const PROJECTS: Project[] = [
   {
     id: 'p1',
     title: 'thela thaila thikana',
-    date: 'Dec 2024',
-    year: '2024',
+    date: 'March 2025',
+    year: '2025',
     category: 'UX Research & Zine',
     description: [
       'This project explores the everyday ecosystem of a municipal market, focusing on the interactions between vendors, visitors, and workers.',
@@ -93,8 +93,8 @@ export const PROJECTS: Project[] = [
   {
     id: 'p4',
     title: 'Pawly Cat Food',
-    date: 'Sept 2025',
-    year: '2025',
+    date: 'Jan 2026',
+    year: '2026',
     category: 'Packaging Design',
     description: [
       'Pawly is a packaging design project for dry salmon-based cat food, created to make pet nutrition feel approachable and engaging for owners.',
@@ -111,8 +111,8 @@ export const PROJECTS: Project[] = [
   {
     id: 'p5',
     title: 'The Pen Hospital',
-    date: 'Present',
-    year: '2026',
+    date: 'Nov 2025',
+    year: '2025',
     category: '3D World Building / VR',
     description: [
       'The Pen Hospital is a virtual reality experience inspired by a real pen repair shop in Thrissur. Set during the 1960s Land Reform period, it explores how everyday objects—like pens used to sign land contracts, can carry historical and emotional significance.',
