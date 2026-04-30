@@ -123,7 +123,7 @@ export const PROJECTS: Project[] = [
     tech: ['Unity', 'Blender'],
     coverImage: '/3d world building/Screenshot 2026-04-30 180238ev.png',
     images: ['/3d world building/Screenshot 2026-04-30 180238ev.png'],
-    videoSrc: '/3d world building/video walkthrough VR (1).mp4'
+    videoSrc: '/3d world building/video walkthrough VR (2).mp4'
   }
 ];
 
