@@ -7,6 +7,7 @@ import { FloatingNav } from './components/FloatingNav';
 import { Loader } from './components/Loader';
 import { Background } from './components/Background';
 import { ProjectDetailView } from './components/ProjectDetailView';
+import { NotFoundView } from './components/NotFoundView';
 import Aarchi from './assets/aarchi.jpg';
 
 const pageVariants: Variants = {
@@ -313,6 +314,11 @@ const App: React.FC = () => {
                 ))}
               </div>
             </motion.div>
+          )}
+
+          {/* 404 VIEW */}
+          {view === '404' && (
+            <NotFoundView setView={setView} />
           )}
 
           {/* CONTACT VIEW */}

@@ -1,4 +1,4 @@
-export type ViewState = 'HOME' | 'identity' | 'PROJECTS' | 'CONTACT' | 'project-detail';
+export type ViewState = 'HOME' | 'identity' | 'PROJECTS' | 'CONTACT' | 'project-detail' | '404';
 
 export interface Experience {
   id: string;
