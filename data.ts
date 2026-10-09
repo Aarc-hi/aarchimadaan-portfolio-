@@ -7,22 +7,57 @@ export const EXPERIENCES: Experience[] = [
     company: 'Teamarcs Technologies',
     period: 'Dec 2024 - Jan 2025',
     points: [
-      'Created social media content and graphics for the organization.',
-      'Enhanced skills in Photoshop, Illustrator, and Figma.',
-      'Contributed to UI design focusing on layout and UX improvements.'
+      'Created social media content and graphics, and designed business cards and print materials.',
+      'Improved skills in Adobe Photoshop, Illustrator, and Figma.',
+      'Contributed to UI design by enhancing layouts and user experience.'
     ]
   },
   {
     id: 'exp2',
+    role: 'Summer Intern',
+    company: 'Serendipity Arts Foundation',
+    period: 'Jun 2026 - Jul 2026',
+    points: [
+      'Supported in making creatives and layouts for the website.',
+      'Helped with research and created assets for events alongside the design team.'
+    ]
+  },
+  {
+    id: 'exp3',
     role: 'Volunteer',
     company: 'Serendipity Arts Festival',
     period: 'December 2025',
     points: [
-      'Supported on-site crowd management and ensured smooth visitor flow across event spaces.',
-      'Coordinated with the set design, graphic design, and exhibition design teams to align visual execution.',
-      'Managed interactions with diverse age groups, facilitating audience engagement with visual art installations.'
+      'Supported artists with installations, set design, and spatial setup.',
+      'Handled coordination and problem-solving during live exhibitions and public-facing event environments.'
     ]
   }
+];
+
+export const SKILLS: string[] = [
+  'UI Design',
+  'Identity Design',
+  'UX Research',
+  'Attention to Detail',
+  'User-Centered Thinking',
+  'Video Editing',
+  'Sound Design',
+  'Prototyping',
+  'Digital Art',
+  'Adaptability',
+  'Fast Learning',
+  '3D Modelling',
+  'Team Collaboration'
+];
+
+export const TOOLS: string[] = [
+  'Figma',
+  'Adobe InDesign',
+  'Photoshop',
+  'Illustrator',
+  'Blender',
+  'Procreate',
+  'Claude'
 ];
 
 export const PROJECTS: Project[] = [
@@ -115,7 +150,7 @@ export const PROJECTS: Project[] = [
     year: '2025',
     category: '3D World Building / VR',
     description: [
-      'The Pen Hospital is a virtual reality experience inspired by a real pen repair shop in Thrissur. Set during the 1960s Land Reform period, it explores how everyday objects—like pens used to sign land contracts, can carry historical and emotional significance.',
+      'The Pen Hospital is a virtual reality experience inspired by a real pen repair shop in Thrissur. Set during the 1960s Land Reform period, it explores how everyday objectsâ€”like pens used to sign land contracts, can carry historical and emotional significance.',
       'Users enter a hospital-like environment where they interact with and repair these pens, engaging with both the space and its context.'
     ],
     concept: 'The project reimagines broken pens as patients, turning repair into an act of care rather than utility. Through this metaphor, the interaction reflects ideas of creativity, labor, and the lasting impact of decisions tied to these objects. The experience uses simple actions to create a more reflective and meaningful engagement.',
@@ -126,10 +161,3 @@ export const PROJECTS: Project[] = [
     videoSrc: '/3d world building/video walkthrough VR (2).mp4'
   }
 ];
-
-export const SKILLS = {
-  design: ['Adobe Creative Suite', 'Figma', 'UI Design', 'Digital Art', '3D Modelling', 'Prototyping', 'Video Editing'],
-  tools: ['Blender', 'Unity', 'Framer', 'Procreate', 'Photoshop', 'Illustrator'],
-  research: ['UX Research', 'User-Centered Thinking', 'A/B Testing'],
-  soft: ['Adaptability', 'Communication', 'Empathy', 'Team Collaboration']
-};

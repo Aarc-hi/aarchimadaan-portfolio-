@@ -28,8 +28,7 @@ export interface Project {
 }
 
 export const NAV_ITEMS: { id: ViewState; label: string }[] = [
-  { id: 'HOME', label: '01. Intro' },
-  { id: 'identity', label: '02. Identity' },
-  { id: 'PROJECTS', label: '03. Works' },
-  { id: 'CONTACT', label: '04. Connect' },
+  { id: 'identity', label: 'About' },
+  { id: 'PROJECTS', label: 'Works' },
+  { id: 'CONTACT', label: 'Connect' },
 ];

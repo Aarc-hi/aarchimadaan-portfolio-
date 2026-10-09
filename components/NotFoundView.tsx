@@ -22,7 +22,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ setView }) => {
             x: [0, -2, 2, -2, 0]
           }}
           transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}
-          className="text-[15vw] md:text-[200px] font-display font-black leading-none text-transparent text-stroke-thick opacity-20"
+          className="text-[15vw] md:text-[200px] font-display font-medium leading-none text-transparent text-stroke-thick opacity-20"
         >
           404
         </motion.div>
@@ -32,14 +32,14 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ setView }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="bg-cobalt text-white px-6 py-2 font-mono text-xl md:text-2xl font-bold rotate-[-2deg] shadow-hard"
+            className="bg-cobalt text-white px-6 py-2 font-sans text-xl md:text-2xl font-bold rotate-[-2deg] shadow-hard"
           >
-            YOU'RE LOST, BESTIE
+            You're lost, bestie
           </motion.div>
         </div>
       </div>
 
-      <h2 className="text-4xl md:text-6xl font-display font-black uppercase tracking-tighter mb-8 leading-tight">
+      <h2 className="text-4xl md:text-6xl font-display font-medium tracking-tight mb-8 leading-tight">
         This pixel doesn't<br/>
         <span className="text-cobalt underline decoration-wavy">exist yet.</span>
       </h2>
@@ -53,7 +53,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ setView }) => {
           whileHover={{ scale: 1.05, rotate: -2 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setView('HOME')}
-          className="flex items-center gap-3 px-10 py-4 bg-ink dark:bg-ink-light text-paper dark:text-paper-dark font-display font-bold text-lg uppercase shadow-hard hover:shadow-none transition-all"
+          className="flex items-center gap-3 px-10 py-4 bg-ink text-paper font-display font-normal text-lg shadow-hard hover:shadow-none transition-all"
         >
           <Home size={20} />
           Go Home
@@ -63,7 +63,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ setView }) => {
           whileHover={{ scale: 1.05, rotate: 2 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setView('PROJECTS')}
-          className="flex items-center gap-3 px-10 py-4 bg-transparent border-2 border-current font-display font-bold text-lg uppercase hover:bg-cobalt hover:text-white hover:border-cobalt transition-all"
+          className="flex items-center gap-3 px-10 py-4 bg-transparent border-2 border-current font-display font-normal text-lg hover:bg-cobalt hover:text-white hover:border-cobalt transition-all"
         >
           <Search size={20} />
           View Works
