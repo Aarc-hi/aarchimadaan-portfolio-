@@ -19,6 +19,8 @@ export interface Project {
   problemStatement?: string;
   concept?: string;
   researchQuestion?: string;
+  tldrImage?: string;   // optional picture shown on the right of the tl;dr
+  tldr?: string;   // the short summary at the very top of the project page
   images?: string[];
   mockups?: string[];
   pages?: string[];

@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ViewState, Project } from '../types';
 import { PROJECTS } from '../data';
+import { PawlyCaseStudy, PAWLY_NAV } from './pawly/PawlyCaseStudy';
+import { Marked } from './Marked';
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -11,7 +13,7 @@ interface ProjectDetailViewProps {
 }
 
 export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, setView, setSelectedProject }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(project.tldr ? 'tldr' : project.id === 'p4' ? 'what' : 'overview');
   const scrollRef = useRef<HTMLElement>(null);
 
   const mockups = project.mockups || [];
@@ -20,6 +22,12 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   const allImages = [...mockups, ...standardImages, ...pages];
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // Thela Thaila Thikana opens straight into its research, so it skips the Overview and Concept blurbs.
+  // Pawly has its own set of sections (components/pawly), so it skips the generic ones too.
+  const isPawly = project.id === 'p4';
+  const showIntro = !isPawly;
+  // ...and shows its research question as the heading above its findings, with its team, role and date beside the title.
+  const questionInHeader = false; // (the Thela research layout is not part of this push)
 
   const openLightbox = (index: number) => setLightboxIndex(index);
   const closeLightbox = () => setLightboxIndex(null);
@@ -43,6 +51,15 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
       scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [project.id]);
+
+  // This page scrolls inside its own column, so hide the page scrollbar behind it while it's open.
+  useEffect(() => {
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    return () => { document.documentElement.style.overflow = prevHtml; document.body.style.overflow = prevBody; };
+  }, []);
 
   useEffect(() => {
     const scrollContainer = scrollRef.current;
@@ -87,41 +104,78 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
     setView('PROJECTS');
   };
 
+  // Side nav: collapsed to a slim rail at the left edge, slides out when the cursor comes near.
+  const [navOpen, setNavOpen] = useState(false);
+  const navTimer = useRef<number | null>(null);
+  const openNav = () => {
+    if (navTimer.current) window.clearTimeout(navTimer.current);
+    setNavOpen(true);
+  };
+  const closeNav = () => {
+    if (navTimer.current) window.clearTimeout(navTimer.current);
+    navTimer.current = window.setTimeout(() => setNavOpen(false), 250);
+  };
+  useEffect(() => () => { if (navTimer.current) window.clearTimeout(navTimer.current); }, []);
+
+  const goTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setNavOpen(false);
+  };
+
+  // `sub` items are the research chapters, listed indented under "Findings".
+  const tldrNav = project.tldr ? [{ id: 'tldr', label: 'tl;dr' }] : [];
+  const navItems: { id: string; label: string; sub?: boolean }[] = isPawly ? [...tldrNav, ...PAWLY_NAV] : [
+    ...tldrNav,
+    ...(showIntro ? [{ id: 'overview', label: 'Overview' }, { id: 'concept', label: 'Concept' }] : []),
+    { id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' },
+    ...(project.youtubeId ? [{ id: 'prototype', label: 'Prototype' }] : []),
+    ...(project.videoSrc ? [{ id: 'video', label: 'Video Walkthrough' }] : []),
+    ...(allImages.length > 0 ? [{ id: 'images', label: 'Visuals' }] : []),
+    { id: 'details', label: 'Tech Stack' },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed inset-0 z-[60] bg-paper dark:bg-paper-dark pt-24 pb-8"
+      className="fixed inset-0 z-[60] bg-paper pt-24 pb-8"
       style={{ display: 'flex', justifyContent: 'center' }}
     >
-      <div className="w-full max-w-7xl px-4 md:px-12" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-        {/* LEFT column — stays fixed */}
-        <aside className="hidden md:flex flex-col shrink-0 border-r-2 border-black/10 dark:border-white/10" style={{ width: '240px' }}>
-          <div className="flex flex-col gap-4 font-mono text-sm uppercase tracking-widest px-8 py-12 overflow-y-auto">
-            <button onClick={handleClose} className="hover:text-cobalt text-left mb-12 flex items-center gap-2 font-black cursor-pointer transition-colors text-ink dark:text-ink-light group">
-              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="font-black">Back to Works</span>
-            </button>
-            <a href="#overview" onClick={(e) => { e.preventDefault(); document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'overview' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>Overview</a>
-            <a href="#concept" onClick={(e) => { e.preventDefault(); document.getElementById('concept')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'concept' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>Concept</a>
-            <a href="#problem" onClick={(e) => { e.preventDefault(); document.getElementById('problem')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'problem' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>{project.researchQuestion ? 'Research' : 'Problem'}</a>
-            {project.youtubeId && (
-              <a href="#prototype" onClick={(e) => { e.preventDefault(); document.getElementById('prototype')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'prototype' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>Prototype</a>
-            )}
-            {project.videoSrc && (
-              <a href="#video" onClick={(e) => { e.preventDefault(); document.getElementById('video')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'video' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>Video Walkthrough</a>
-            )}
-            {(standardImages.length > 0 || mockups.length > 0 || pages.length > 0) && (
-              <a href="#images" onClick={(e) => { e.preventDefault(); document.getElementById('images')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'images' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>Visuals</a>
-            )}
-            <a href="#details" onClick={(e) => { e.preventDefault(); document.getElementById('details')?.scrollIntoView({ behavior: 'smooth' }); }} className={`border-l-2 pl-4 py-2 transition-all duration-300 ease-out ${activeTab === 'details' ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 dark:text-ink-light/70 hover:border-black/50 dark:hover:border-white/50'}`}>Tech Stack</a>
-          </div>
-        </aside>
+      <div className="w-full px-3 md:px-5 flex flex-col md:flex-row" style={{ height: '100%', overflow: 'hidden' }}>
+        {/* LEFT rail — a slim set of ticks at the edge; the full nav slides out when the cursor comes near */}
+        <div
+          className="hidden md:block absolute left-0 top-24 bottom-8 z-20"
+          style={{ width: navOpen ? '190px' : '36px' }}
+          onMouseEnter={openNav}
+          onMouseLeave={closeNav}
+          onFocusCapture={openNav}
+          onBlurCapture={closeNav}
+        >
+          <button type="button" aria-label="Show project navigation" onClick={() => setNavOpen((o) => !o)}
+            className="absolute left-0 top-0 bottom-0 w-9 flex flex-col items-start justify-center gap-4 pl-3 cursor-pointer">
+            {navItems.map((n) => (
+              <span key={n.id} className={`block h-0.5 rounded-full transition-all duration-300 ${activeTab === n.id ? 'w-5 bg-cobalt' : 'w-3 bg-black/25'}`} />
+            ))}
+          </button>
+
+          <aside className={`absolute left-0 top-0 bottom-0 w-[184px] bg-paper border-r-2 border-black/10 shadow-[8px_0_24px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${navOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'}`}>
+            <div className="flex flex-col gap-3 font-sans text-[11px] tracking-wide pl-3 pr-3 py-10 h-full overflow-y-auto no-scrollbar">
+              <button onClick={handleClose} className="hover:text-cobalt text-left mb-10 flex items-center gap-2 font-black cursor-pointer transition-colors text-ink group">
+                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform shrink-0" />
+                <span className="font-black">Back to Works</span>
+              </button>
+              {navItems.map((n) => (
+                <a key={n.id} href={`#${n.id}`} onClick={(e) => { e.preventDefault(); goTo(n.id); }}
+                  className={`border-l-2 py-2 transition-all duration-300 ease-out ${n.sub ? 'pl-7 -mt-2 py-1.5 text-[11px]' : 'pl-4'} ${activeTab === n.id ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 hover:border-black/50'}`}>{n.label}</a>
+              ))}
+            </div>
+          </aside>
+        </div>
 
         {/* Mobile Back Button */}
-        <div className="md:hidden w-full mb-8 pt-16 px-4 flex justify-between items-center z-50">
-          <button onClick={handleClose} className="hover:text-cobalt flex items-center gap-2 font-bold cursor-pointer transition-colors">
+        <div className="md:hidden w-full shrink-0 mb-2 pt-4 px-1 flex justify-between items-center z-50">
+          <button onClick={handleClose} className="hover:text-cobalt flex items-center gap-2 font-bold text-lg cursor-pointer transition-colors">
             <ArrowLeft size={20} /> Back
           </button>
         </div>
@@ -132,24 +186,53 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           onScroll={(e) => {
             const target = e.target as HTMLElement;
             if (Math.abs(target.scrollHeight - target.scrollTop - target.clientHeight) < 20) {
-              setActiveTab('details');
+              setActiveTab(isPawly ? PAWLY_NAV[PAWLY_NAV.length - 1].id : 'details');
             }
           }}
-          style={{ flex: 1, overflowY: 'auto', height: '100%', padding: '2rem' }}
+          className="no-scrollbar px-3 pt-4 pb-10 md:pt-8 md:pl-14 md:pr-14"
+          style={{ flex: 1, minHeight: 0, minWidth: 0, overflowY: 'auto' }}
         >
-          <div className="mb-24 flex flex-col gap-6">
-            <h1 className="text-5xl md:text-8xl font-display font-black tracking-normal uppercase leading-[0.85] text-ink dark:text-ink-light">
-              {project.title}
-            </h1>
-            <div className="flex flex-wrap gap-4 font-mono font-bold uppercase tracking-widest text-sm md:text-base">
-              <span className="bg-cobalt text-white px-3 py-1 shadow-hard-sm">{project.year}</span>
-              <span className="border-2 border-black dark:border-white bg-paper dark:bg-paper-dark px-3 py-1 text-ink dark:text-white shadow-hard-sm">{project.category}</span>
+          <div className="max-w-6xl mx-auto">
+          <div className={`mb-24 flex flex-col gap-8 ${questionInHeader ? 'md:flex-row md:items-end md:justify-between' : ''}`}>
+            <div className="flex flex-col gap-6 shrink-0">
+              <h1 className="text-5xl md:text-8xl capitalize w-min text-left font-display font-medium tracking-tight leading-[0.9] text-ink">
+                {project.title}
+              </h1>
+              {!questionInHeader && (
+              <div className="flex flex-wrap gap-4 font-sans font-bold tracking-wide text-lg">
+                <span className="bg-cobalt text-white px-3 py-1">{project.year}</span>
+                <span className="border-2 border-black bg-paper px-3 py-1 text-ink">{project.category}</span>
+              </div>
+              )}
             </div>
+            {/* Thela Thaila Thikana lists its team, role and date as plain lines, pushed to the right margin along the title's bottom edge */}
+            {questionInHeader && (
+              <div className="flex flex-col gap-4 font-sans text-lg text-left md:pb-2">
+                <div><p className="text-[11px] tracking-wide opacity-60 mb-0.5">Group</p><p>6 people</p></div>
+                <div><p className="text-[11px] tracking-wide opacity-60 mb-0.5">My role</p><p>Research and creatives</p></div>
+                <div><p className="text-[11px] tracking-wide opacity-60 mb-0.5">Date</p><p>March 2025</p></div>
+              </div>
+            )}
           </div>
 
+          {/* TL;DR: the first thing on every project page */}
+          {project.tldr && (
+            <section id="tldr" className={project.tldrImage ? 'scroll-mt-32 mb-24 sm:-mt-16' : 'scroll-mt-32 mb-24 md:mb-32'}>
+              <div className={project.tldrImage ? 'grid gap-10 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-2 lg:gap-16 items-end' : ''}>
+                <div className="sm:-mb-2">
+                  <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">tl;dr</h2>
+                  <p className="font-sans text-lg leading-relaxed max-w-2xl"><Marked text={project.tldr} /></p>
+                </div>
+                {/* the full orange cat: the front panel of the pack, on the right of the tl;dr */}
+                {project.tldrImage && <img src={project.tldrImage} alt={`${project.title}, the front of the pack`} className="block justify-self-center sm:-mt-[110px]" style={{ width: 'min(100%, 325px, calc(62vh * 0.7738))', height: 'auto' }} />}
+              </div>
+            </section>
+          )}
+
+          {showIntro && (<>
           <section id="overview" className="scroll-mt-32 mb-32">
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-8 uppercase border-b-2 border-current inline-block pb-2">Overview</h2>
-            <div className="text-lg md:text-2xl font-sans max-w-3xl leading-relaxed space-y-6">
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Overview</h2>
+            <div className="text-lg font-sans max-w-3xl leading-relaxed space-y-6">
               {project.description.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
@@ -157,24 +240,30 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           </section>
 
           <section id="concept" className="scroll-mt-32 mb-32">
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-8 uppercase border-b-2 border-current inline-block pb-2">Concept</h2>
-            <div className="text-lg md:text-2xl font-sans max-w-3xl leading-relaxed space-y-6">
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Concept</h2>
+            <div className="text-lg font-sans max-w-3xl leading-relaxed space-y-6">
               <p>{project.concept || "Design conceptualization focusing on user experience and visual narrative."}</p>
             </div>
           </section>
 
+          </>)}
+
+          {isPawly && <PawlyCaseStudy />}
+
+          {!questionInHeader && !isPawly && (
           <section id="problem" className="scroll-mt-32 mb-32">
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-8 uppercase border-b-2 border-current inline-block pb-2">
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">
               {project.researchQuestion ? 'Research Question' : 'Problem Statement'}
             </h2>
-            <div className="text-lg md:text-2xl font-sans max-w-3xl leading-relaxed space-y-6">
+            <div className="text-lg font-sans max-w-3xl leading-relaxed space-y-6">
               <p>{project.researchQuestion || project.problemStatement || "Project challenge and user pain points analysis."}</p>
             </div>
           </section>
+          )}
 
           {project.youtubeId && (
             <section id="prototype" className="scroll-mt-32 mb-32">
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-12 uppercase border-b-2 border-current inline-block pb-2">Prototype</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Prototype</h2>
               <div className="w-full aspect-video border-2 border-black/20 overflow-hidden bg-black shadow-hard">
                 <iframe
                   width="100%"
@@ -192,7 +281,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
           {project.videoSrc && (
             <section id="video" className="scroll-mt-32 mb-32">
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-12 uppercase border-b-2 border-current inline-block pb-2">Video Walkthrough</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Video Walkthrough</h2>
               <div className="w-full aspect-video border-2 border-black/20 overflow-hidden bg-black shadow-hard">
                 <video
                   controls
@@ -206,9 +295,9 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             </section>
           )}
 
-          {(standardImages.length > 0 || mockups.length > 0 || pages.length > 0) && (
+          {!isPawly && (standardImages.length > 0 || mockups.length > 0 || pages.length > 0) && (
             <section id="images" className="scroll-mt-32 mb-32">
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-12 uppercase border-b-2 border-current inline-block pb-2">Visuals</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Visuals</h2>
               <div className="flex flex-col gap-12">
                 {/* Large Mockups */}
                 {mockups.length > 0 && (
@@ -217,7 +306,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
                       <div
                         key={`mockup-${i}`}
                         onClick={() => openLightbox(i)}
-                        className="border-2 border-black/20 overflow-hidden flex items-center justify-center bg-paper dark:bg-paper-dark cursor-pointer transition-transform hover:scale-[1.01] duration-300"
+                        className="border-2 border-black/20 overflow-hidden flex items-center justify-center bg-paper cursor-pointer transition-transform hover:scale-[1.01] duration-300"
                       >
                         <img src={encodeURI(imgSrc)} alt={`${project.title} mockup ${i + 1}`} className="w-full h-auto object-cover" />
                       </div>
@@ -232,9 +321,9 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
                       <div
                         key={`img-${i}`}
                         onClick={() => openLightbox(mockups.length + i)}
-                        className={`group relative cursor-pointer overflow-hidden bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-500 ${
-                          project.category.toLowerCase().includes('zine') && i === 0 
-                          ? 'max-w-[50%] ml-auto mr-0' 
+                        className={`group relative cursor-pointer overflow-hidden bg-white border border-black/5 shadow-sm hover:shadow-xl transition-all duration-500 ${
+                          project.category.toLowerCase().includes('zine') && i === 0
+                          ? 'max-w-[50%] ml-auto mr-0'
                           : project.category.toLowerCase().includes('zine') && i === standardImages.length - 1
                           ? 'max-w-[50%] ml-0 mr-auto'
                           : ''
@@ -253,7 +342,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
                 {/* Small Pages Grid */}
                 {pages.length > 0 && (
-                  <div className="bg-[#cdcdcd] dark:bg-zinc-800/80 p-6 md:p-12 w-full mt-8 rounded-lg">
+                  <div className="bg-[#cdcdcd] p-6 md:p-12 w-full mt-8 rounded-lg">
                     <div className={`grid gap-4 md:gap-8 items-center ${pages.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-4'}`}>
                       {pages.map((imgSrc, i) => {
                         const globalIndex = mockups.length + standardImages.length + i;
@@ -276,7 +365,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
                     {[1, 2, 3, 4].map((i) => (
                       <div key={i} className="aspect-video border-2 border-black/20 bg-paper-dark/5 flex items-center justify-center p-4">
-                        <span className="font-mono text-sm uppercase opacity-40 text-center mix-blend-difference">[ Image to be added ]</span>
+                        <span className="font-sans text-[11px] opacity-40 text-center mix-blend-difference">[ Image to be added ]</span>
                       </div>
                     ))}
                   </div>
@@ -285,16 +374,18 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             </section>
           )}
 
+          {!isPawly && (
           <section id="details" className="scroll-mt-40 mb-24">
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-8 uppercase border-b-2 border-current inline-block pb-2">Tech Stack</h2>
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Tech Stack</h2>
             <div className="flex flex-wrap gap-4">
               {project.tech.map((t, idx) => (
-                <span key={idx} className="border-2 border-current bg-paper dark:bg-paper-dark px-6 py-3 font-mono font-bold text-lg hover:bg-ink hover:text-paper transition-colors shadow-hard">
+                <span key={idx} className="border-2 border-current bg-paper px-6 py-3 font-sans font-bold text-lg hover:bg-ink hover:text-paper transition-colors shadow-hard">
                   {t}
                 </span>
               ))}
             </div>
           </section>
+          )}
 
           {/* Navigation Buttons */}
           <div className="mt-16 pt-8 border-t-2 border-current flex flex-col md:flex-row justify-between gap-6">
@@ -302,16 +393,17 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
               onClick={handlePrev}
               className="group flex flex-col items-start gap-2 border-2 border-current bg-transparent px-6 py-4 shadow-hard hover:shadow-none hover:bg-cobalt hover:text-white hover:border-cobalt transition-all duration-200"
             >
-              <span className="font-mono text-xs uppercase opacity-70">← Previous</span>
-              <span className="font-display font-bold text-xl md:text-3xl uppercase tracking-tighter w-full text-left truncate">{prevProject.title}</span>
+              <span className="font-sans text-[11px] opacity-70">← Previous</span>
+              <span className="font-display font-normal text-3xl tracking-tight w-full text-left truncate">{prevProject.title}</span>
             </button>
             <button
               onClick={handleNext}
               className="group flex flex-col items-end gap-2 border-2 border-current bg-transparent px-6 py-4 shadow-hard hover:shadow-none hover:bg-cobalt hover:text-white hover:border-cobalt transition-all duration-200 text-right"
             >
-              <span className="font-mono text-xs uppercase opacity-70">Next →</span>
-              <span className="font-display font-bold text-xl md:text-3xl uppercase tracking-tighter w-full text-right truncate">{nextProject.title}</span>
+              <span className="font-sans text-[11px] opacity-70">Next →</span>
+              <span className="font-display font-normal text-3xl tracking-tight w-full text-right truncate">{nextProject.title}</span>
             </button>
+          </div>
           </div>
         </main>
       </div>

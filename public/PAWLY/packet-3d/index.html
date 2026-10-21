@@ -1,0 +1,332 @@
+<!doctype html><html data-theme="light"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pawly Packet 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one full screen stage, the packet centred, a quiet caption top left and two controls bottom centre */
+:root{
+  --bg:#ecebe8; --bg2:#e2e0dc; --fg:#3f3a37; --muted:#7c736c; --accent:#f7923c; --chip:#ffffffcc; --chipline:#00000014;
+  --display:"Fredoka","Nunito Sans",system-ui,sans-serif; --body:"Nunito Sans",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#22201f;--bg2:#2b2826;--fg:#f1ebe5;--muted:#a69c94;--chip:#2f2b29cc;--chipline:#ffffff1f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#22201f;--bg2:#2b2826;--fg:#f1ebe5;--muted:#a69c94;--chip:#2f2b29cc;--chipline:#ffffff1f;color-scheme:dark}
+html,body{height:100%}
+body{background:radial-gradient(120% 80% at 50% 35%,var(--bg) 40%,var(--bg2) 100%);background-color:var(--bg);color:var(--fg);font-family:var(--body);overflow:hidden;padding-inline:16px}
+#stage{position:fixed;inset:0;touch-action:none}
+canvas{display:block;outline:none}
+.cap{position:fixed;top:calc(env(safe-area-inset-top,0px) + 18px);left:20px;right:20px;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.cap h1{font-family:var(--display);font-weight:600;font-size:1.35rem;margin:0;letter-spacing:.01em}
+.cap h1 span{color:var(--accent)}
+.cap p{margin:.15rem 0 0;font-size:.8rem;color:var(--muted)}
+.dims{font-size:.72rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:.04em;text-transform:uppercase;line-height:1.5}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 22px);display:flex;gap:8px;align-items:center}
+.bar button{font:600 .82rem var(--body);color:var(--fg);background:var(--chip);border:1px solid var(--chipline);border-radius:999px;padding:.6rem 1rem;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;min-height:40px}
+.bar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fold{display:flex;align-items:center;gap:8px;font:600 .82rem var(--body);background:var(--chip);border:1px solid var(--chipline);border-radius:999px;padding:0 .9rem;min-height:40px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.fold input{width:84px;accent-color:var(--accent)}
+.hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);text-align:center;font-size:.75rem;color:var(--muted);pointer-events:none;transition:opacity .6s}
+#load{position:fixed;inset:0;display:grid;place-items:center;font-size:.85rem;color:var(--muted)}
+</style>
+
+<div id="stage"></div>
+<div id="load">Loading packet…</div>
+<div class="cap">
+  <div><h1>P<span>a</span>wly</h1><p>Adult Salmon · 500 g pouch</p></div>
+  <div class="dims" id="dims"></div>
+</div>
+<div class="hint" id="hint">Drag to turn · pinch to zoom</div>
+<div class="bar">
+  <button id="spin" type="button" aria-pressed="true">Pause</button>
+  <button id="reset" type="button">Reset view</button>
+  <label class="fold" for="fold">Fold<input id="fold" type="range" min="0" max="100" value="100"></label>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+// Measurements taken straight from the dieline (pixels), scaled so the body is 19 cm tall.
+const PX={w:1053, d:519, h:2198, head:434, texH:2632, win:{x0:121,x1:935,y0:1180,y1:2351}};
+const S=19/PX.h;                       // cm per dieline pixel
+const W=PX.w*S, D=PX.d*S, H=PX.h*S, HEAD=PX.head*S, FH=H+HEAD;
+document.getElementById('dims').innerHTML=`W ${W.toFixed(1)} cm<br>D ${D.toFixed(1)} cm<br>H ${H.toFixed(1)} cm`;
+
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.NoToneMapping;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+const pmrem=new THREE.PMREMGenerator(renderer);
+// studio for reflections: a dim room with three softboxes, so the laminate shows moving highlight streaks
+const studio=new THREE.Scene(); studio.background=new THREE.Color(0x2c2a28);
+for(let i=0;i<6;i++){                     // tall softbox strips all round, so a streak sweeps across each panel as it turns
+  const a=i/6*Math.PI*2+0.3, m=new THREE.Mesh(new THREE.PlaneGeometry(5,30),new THREE.MeshBasicMaterial({color:new THREE.Color().setScalar(i%2?3.2:5),side:THREE.DoubleSide}));
+  m.position.set(Math.sin(a)*22,10,Math.cos(a)*22); m.lookAt(0,10,0); studio.add(m);
+}
+const lid=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.MeshBasicMaterial({color:new THREE.Color().setScalar(2.5),side:THREE.DoubleSide}));
+lid.position.set(0,30,0); lid.rotation.x=Math.PI/2; studio.add(lid);
+const tableTop=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshBasicMaterial({color:new THREE.Color().setScalar(0.45),side:THREE.DoubleSide}));
+tableTop.rotation.x=-Math.PI/2; tableTop.position.y=-0.5; studio.add(tableTop);   // pale tabletop so downward facing folds never reflect black
+const env=pmrem.fromScene(studio,0.02).texture;
+
+const Q=new URLSearchParams(location.search), ENV_I=+(Q.get('e')??1), HEMI=+(Q.get('h')??2.55), CAM=+(Q.get('c')??0.6);
+const camera=new THREE.PerspectiveCamera(28,1,0.5,500);
+const target=new THREE.Vector3(0,FH*0.48,0);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.copy(target); controls.enableDamping=true; controls.dampingFactor=0.08;
+controls.enablePan=false; controls.autoRotate=true; controls.autoRotateSpeed=2.2;
+controls.minPolarAngle=0.25; controls.maxPolarAngle=Math.PI*0.86;   // can tip below to see the folded base
+
+// Lighting tuned so the face pointing at you shows the dieline colours almost unchanged.
+scene.add(new THREE.HemisphereLight(0xffffff,0xf6f2ec,HEMI));
+const key=new THREE.DirectionalLight(0xffffff,0.3); key.position.set(18,40,30); key.castShadow=true;
+key.shadow.mapSize.set(1024,1024); Object.assign(key.shadow.camera,{left:-15,right:15,top:15,bottom:-15,near:1,far:120}); key.shadow.radius=6;
+scene.add(key);
+const camLight=new THREE.DirectionalLight(0xffffff,CAM); camera.add(camLight); camLight.position.set(0,0,1); scene.add(camera);
+
+const loader=new THREE.TextureLoader();
+const aniso=renderer.capabilities.getMaxAnisotropy();
+const tex=u=>loader.loadAsync(u).then(t=>{t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=aniso;return t});
+const BOARD=0xebe7dd, INSIDE=0xf1efea;  // cream flap colour from the dieline, plain board inside
+
+const [tFront,tBack,tLeft,tRight,tMask,fBack,fLeft,fRight,bBack,bLeft,bFront,bRight]=await Promise.all([tex('front.png'),tex('back.png'),tex('left.png'),tex('right.png'),loader.loadAsync('mask.png'),tex('flap_back.png'),tex('flap_left.png'),tex('flap_right.png'),tex('bot_back.png'),tex('bot_left.png'),tex('bot_front.png'),tex('bot_right.png')]);
+document.getElementById('load').remove();
+
+const box=new THREE.Group(); scene.add(box);
+// glossy plastic laminate: clear coat over the print, picking up soft studio reflections as it turns
+const gloss={roughness:0.38,metalness:0,clearcoat:1,clearcoatRoughness:0.07,envMap:env,envMapIntensity:ENV_I};
+// the studio only adds reflections; it never lightens the print, so colours stay true to the dieline
+const noEnvDiffuse=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <lights_fragment_maps>',
+  THREE.ShaderChunk.lights_fragment_maps.replace('iblIrradiance += getIBLIrradiance( geometryNormal );',''));};
+const glossy=o=>{const m=new THREE.MeshPhysicalMaterial({...gloss,...o});m.onBeforeCompile=noEnvDiffuse;return m;};
+const printed=map=>glossy({map,alphaTest:0.5});
+function panel(w,h,mat,pos,rotY,shadow=true){
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
+  m.position.set(...pos); m.rotation.y=rotY; m.castShadow=shadow; m.receiveShadow=true; box.add(m); return m;
+}
+const e=0.012; // board thickness offset between print side and inside
+// Gusset fold, like a paper bag top: front and back lean in and meet at a ridge over the middle of the base.
+// Each side panel creases down its centre and from each bottom corner to the top of that centre crease,
+// so the whole side artwork stays on the board and bends inward. Nothing is trimmed and nothing stretches.
+const inside=new THREE.MeshLambertMaterial({color:INSIDE,side:THREE.BackSide});
+function mesh(g,outMat,inMat,parent=box){const o=new THREE.Mesh(g,outMat);o.castShadow=true;o.receiveShadow=true;parent.add(o);parent.add(new THREE.Mesh(g,inMat));}
+// front and back hinge at their bottom edges
+const frontG=new THREE.Group(); frontG.position.z=D/2; box.add(frontG);
+const backG=new THREE.Group(); backG.position.z=-D/2; box.add(backG);
+// Soft plastic pouch: panels puff outward between their seams and crinkle toward the top fold.
+const FB=0.38, SB=0.2, WR=0.085;        // front/back puff, side puff, wrinkle depth (cm)
+const sst=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+function pouch(x,y,len){                 // outward offset for a front/back panel point (x across, y up)
+  const u=x/W+0.5, edge=Math.sin(Math.PI*u), yb=Math.min(y,len)/len;
+  let z=FB*edge*Math.sin(Math.PI*yb);
+  const top=sst(0.7,1,y/len)*(y>len?Math.max(0.35,1-(y-len)/HEAD):1);
+  z+=WR*top*Math.pow(edge,0.6)*(0.6*Math.sin(u*29+y*0.55)+0.4*Math.sin(u*47-y*1.3+0.7));
+  z+=0.025*Math.sin(u*7.3+y*0.8)*edge;                      // faint all-over waviness
+  if(y>len) z-=0.4*Math.pow((y-len)/HEAD,2);                  // head flops back a little
+  return z;
+}
+function soften(g,len){const p=g.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,p.getZ(i)+pouch(p.getX(i),p.getY(i),len));g.computeVertexNormals();return g;}
+const fq=soften(new THREE.PlaneGeometry(W,FH,36,140).translate(0,FH/2,0),H);
+mesh(fq,printed(tFront),new THREE.MeshLambertMaterial({color:INSIDE,side:THREE.BackSide,alphaMap:tMask,alphaTest:0.5}),frontG);
+const bq=soften(new THREE.PlaneGeometry(W,H,36,110).translate(0,H/2,0),H); bq.rotateY(Math.PI); bq.computeVertexNormals();
+const shade=inside;   // plain white board inside
+mesh(bq,printed(tBack),shade,backG);
+// side panels: 4 triangles each, rebuilt whenever the fold changes
+const NA=10, NB=60;                     // grid per side half
+function sideGeo(sx){
+  const n=(NA+1)*(NB+1), g=new THREE.BufferGeometry(), uv=[], idx=[];
+  g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(n*2*3),3));
+  for(let h=0;h<2;h++)for(let j=0;j<=NB;j++)for(let i=0;i<=NA;i++){const a=i/NA,b=j/NB;
+    const front=h===0, u=(sx<0)===front?1-0.5*a:0.5*a; uv.push(u,b);}
+  for(let h=0;h<2;h++){const o=h*n, flip=(sx<0)===(h===0);
+    for(let j=0;j<NB;j++)for(let i=0;i<NA;i++){const v00=o+j*(NA+1)+i,v10=v00+1,v01=v00+NA+1,v11=v01+1;
+      if(flip) idx.push(v00,v11,v10, v00,v01,v11); else idx.push(v00,v10,v11, v00,v11,v01);}}
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); g.setIndex(idx); return g;
+}
+const L=sideGeo(-1), R=sideGeo(1);
+// sides sit a hair behind the front and back where the gusset lies flat against them
+const sideMat=t=>Object.assign(printed(t),{polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
+const sideIn=Object.assign(shade.clone(),{polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
+mesh(L,sideMat(tLeft),sideIn); mesh(R,sideMat(tRight),sideIn);
+const bot=new THREE.Mesh(new THREE.PlaneGeometry(W,D),new THREE.MeshLambertMaterial({color:BOARD}));
+bot.rotation.x=Math.PI/2; bot.position.y=0.002; box.add(bot);
+
+// flaps from the dieline: the back tuck flap with its rounded tab, and a dust flap above each side
+const GAP=0.35;                         // half the gap left between front and back when closed (cm)
+const FLAP_B=410*S, FLAP_S=170*S;
+const V=(x,y,z)=>new THREE.Vector3(x,y,z), CTR=V(0,H*0.4,0);
+function flapMesh(map){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(12),3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(8),2));g.setIndex([0,1,2,0,2,3]);
+  const m=new THREE.Mesh(g,glossy({map,alphaTest:0.5,side:THREE.DoubleSide}));m.castShadow=true;box.add(m);g.userData.mesh=m;return g;}
+// hinge P→Q on a panel whose other point is R; ang>0 folds toward the inside, ang<0 opens outward
+function setFlap(g,P,Q,R,h,ang,uP,uQ){
+  const e=Q.clone().sub(P).normalize(), w=P.clone().sub(R), d=w.sub(e.clone().multiplyScalar(w.dot(e))).normalize();
+  let n=new THREE.Vector3().crossVectors(e,d); if(n.dot(CTR.clone().sub(P))<0) n.negate();
+  const dir=d.multiplyScalar(Math.cos(ang)).add(n.multiplyScalar(Math.sin(ang))).multiplyScalar(h);
+  const Pt=P.clone().add(dir), Qt=Q.clone().add(dir);
+  g.attributes.position.array.set([P.x,P.y,P.z,Q.x,Q.y,Q.z,Qt.x,Qt.y,Qt.z,Pt.x,Pt.y,Pt.z]); g.attributes.position.needsUpdate=true;
+  g.attributes.uv.array.set([uP,0,uQ,0,uQ,1,uP,1]); g.attributes.uv.needsUpdate=true;
+  g.computeVertexNormals(); g.computeBoundingSphere();
+}
+const gBackFlap=flapMesh(fBack), gL1=flapMesh(fLeft), gL2=flapMesh(fLeft), gR1=flapMesh(fRight), gR2=flapMesh(fRight);
+// bottom closure from the dieline: four flaps folded flat under the base, sides first, then front, back outermost
+const FLAP_BOT=392*S;
+for(const [map,P,Q,lift,uP,uQ] of [
+  [bLeft, V(-W/2,0,-D/2),V(-W/2,0,D/2),0.03,0,1],
+  [bRight,V(W/2,0,D/2),V(W/2,0,-D/2),0.03,0,1],
+  [bFront,V(-W/2,0,D/2),V(W/2,0,D/2),0.06,0,1],
+  [bBack, V(W/2,0,-D/2),V(-W/2,0,-D/2),0.09,0,1]]){
+  const g=flapMesh(map); setFlap(g,P,Q,P.clone().setY(5),FLAP_BOT,Math.PI/2,uP,uQ);
+  g.userData.mesh.position.y=-lift; g.userData.mesh.receiveShadow=true;
+}
+// inside floor, seen through the window
+const floorIn=new THREE.Mesh(new THREE.PlaneGeometry(W,D),new THREE.MeshLambertMaterial({color:INSIDE}));
+floorIn.rotation.x=-Math.PI/2; floorIn.position.y=0.03; box.add(floorIn);
+box.position.y=0.1;                     // the folded flaps sit on the table under the base
+const PHI_MAX=Math.asin((D/2-GAP)/H);
+function setFold(t){                    // t: 0 open box, 1 closed
+  const phi=PHI_MAX*t, hc=H*Math.cos(phi), s=D/2-H*Math.sin(phi);
+  frontG.rotation.x=-phi; backG.rotation.x=phi;
+  const yc=(H*H-D*D/4+hc*hc+s*s)/(2*hc), dl=Math.sqrt(Math.max(0,H*H-yc*yc));
+  for(const [g,sx] of [[L,-1],[R,1]]){
+    const x=sx*W/2, xi=x-sx*dl;
+    const fb=[x,0,D/2], cb=[x,0,0], ct=[xi,yc,0], ft=[x,hc,s], bb=[x,0,-D/2], bt=[x,hc,-s];
+    const pos=g.attributes.position, n=(NA+1)*(NB+1), A=new THREE.Vector3(), B=new THREE.Vector3(), C=new THREE.Vector3(), N=new THREE.Vector3();
+    [[fb,cb,ct,ft],[bb,cb,ct,bt]].forEach(([e0,c0,c1,e1],h)=>{
+      const P0=V(...e0),P1=V(...c0),P2=V(...c1),P3=V(...e1);
+      for(let j=0;j<=NB;j++)for(let i=0;i<=NA;i++){const a=i/NA,b=j/NB;
+        // flat gusset position: two triangles either side of the crease from the bottom corner to the centre top
+        if(b<=a){A.copy(P1).sub(P0).multiplyScalar(a);B.copy(P2).sub(P1).multiplyScalar(b);C.copy(P0).add(A).add(B);N.crossVectors(V().subVectors(P1,P0),V().subVectors(P2,P0));}
+        else{A.copy(P2).sub(P3).multiplyScalar(a);B.copy(P3).sub(P0).multiplyScalar(b);C.copy(P0).add(A).add(B);N.crossVectors(V().subVectors(P2,P0),V().subVectors(P3,P0));}
+        N.normalize(); if(N.x*sx<0)N.negate();
+        const puff=SB*Math.sin(Math.PI*a)*Math.sin(Math.PI*b)+WR*sst(0.6,1,b)*Math.sin(Math.PI*a)*(0.6*Math.sin(a*9+b*23)+0.4*Math.sin(a*17-b*31+1.3));
+        C.addScaledVector(N,puff); pos.setXYZ(h*n+j*(NA+1)+i,C.x,C.y,C.z);}
+    });
+    pos.needsUpdate=true;
+    g.computeVertexNormals(); g.computeBoundingSphere();
+    // dust flaps ride on the top edges of the two side halves and tuck inside as it closes
+    const da=t*2.9, [g1,g2]=sx<0?[gL1,gL2]:[gR1,gR2], uf=sx<0?1:0, ub=1-uf;
+    setFlap(g1,V(...ft),V(...ct),V(...fb),FLAP_S,da,uf,.5);
+    setFlap(g2,V(...bt),V(...ct),V(...bb),FLAP_S,da,ub,.5);
+  }
+  // back tuck flap: tipped open when the carton is open, tucked inside when closed
+  const beta=THREE.MathUtils.lerp(0.6,-(Math.PI-0.15),t);  // swings over and tucks down inside when closed
+  setFlap(gBackFlap,V(W/2,hc,-s),V(-W/2,hc,-s),V(0,0,-D/2),FLAP_B,-beta,0,1);
+}
+setFold(1);
+
+// ---- Dried salmon pieces inside: chunky, torn, uneven, every piece its own shape ----
+let seed=11; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const DRY=[[0x4a1d12,0.0],[0x7a3222,0.35],[0x9c4a2c,0.6],[0xb8693a,0.82],[0xd59a64,1]].map(([c,t])=>[new THREE.Color(c),t]);
+function dryCol(t,out){t=Math.min(1,Math.max(0,t));for(let i=1;i<DRY.length;i++)if(t<=DRY[i][1]){const[c0,t0]=DRY[i-1],[c1,t1]=DRY[i];return out.copy(c0).lerp(c1,(t-t0)/(t1-t0));}return out.copy(DRY[4][0]);}
+function chunkGeo(){
+  const len=1.3+rnd()*1.7, wid=0.7+rnd()*0.6, th=0.35+rnd()*0.35, bend=(rnd()-0.5)*0.5;
+  const g=new THREE.IcosahedronGeometry(1,2), p=g.attributes.position, n=p.count, cols=new Float32Array(n*3);
+  const waves=[...Array(6)].map(()=>({d:new THREE.Vector3(rnd()-.5,rnd()-.5,rnd()-.5).normalize(),f:2+rnd()*5,ph:rnd()*6.3,a:0.5/(1+rnd()*2)}));
+  const base=rnd()*0.35+0.3, flakeF=5+rnd()*5, v=new THREE.Vector3(), c=new THREE.Color();
+  for(let i=0;i<n;i++){
+    v.fromBufferAttribute(p,i);
+    let nz=0; for(const w of waves) nz+=w.a*Math.sin(v.dot(w.d)*w.f+w.ph);
+    // squashed slab with lumpy torn surface and flaky fibre ridges along its length
+    const flake=Math.sin(v.x*flakeF+nz*2.2);
+    const r=1+0.16*nz+0.05*flake;
+    const ys=Math.sign(v.y)*Math.pow(Math.abs(v.y),0.75);
+    v.set(v.x*len/2*r, ys*th/2*r, v.z*wid/2*r*(1-0.25*Math.abs(Math.sin(v.x*2.3+nz))));
+    v.y+=bend*v.x*v.x;
+    p.setXYZ(i,v.x,v.y,v.z);
+    // colour: darker torn edges and crevices, lighter dried flakes, uneven over the piece
+    const edge=Math.abs(v.z)/(wid/2);
+    dryCol(base+0.22*nz+0.12*flake-0.25*Math.pow(edge,3)+(rnd()-0.5)*0.06,c);
+    cols[i*3]=c.r;cols[i*3+1]=c.g;cols[i*3+2]=c.b;
+  }
+  g.setAttribute('color',new THREE.BufferAttribute(cols,3)); g.computeVertexNormals(); g.computeBoundingSphere();
+  return {g,len,wid,th};
+}
+const fishMat=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:0.6,metalness:0,clearcoat:0.35,clearcoatRoughness:0.45,envMap:env,envMapIntensity:0.5});
+fishMat.onBeforeCompile=noEnvDiffuse;     // a slightly oily sheen without washing out the colour
+const FILL_TOP=11, dummy=new THREE.Object3D(), col=new THREE.Color();
+const tanF=Math.tan(PHI_MAX);
+// the side gussets fold inward toward the top; deepest along the centre crease, nothing at the front and back edges
+const hcC=H*Math.cos(PHI_MAX), sC=D/2-H*Math.sin(PHI_MAX), ycC=(H*H-D*D/4+hcC*hcC+sC*sC)/(2*hcC), dlC=Math.sqrt(Math.max(0,H*H-ycC*ycC));
+const gussetIn=(y,zn)=>dlC*Math.min(Math.min(1,y/ycC),1-Math.min(1,Math.abs(zn)/(D/2)));
+// Settled under gravity: pieces stacked in loose layers from the base up, wall to wall,
+// most lying flat or tipped, with a gently mounded, uneven top surface.
+const shapes=[...Array(18)].map(chunkGeo), lists=shapes.map(()=>[]);
+const surface=(x,z)=>FILL_TOP+0.5*Math.cos(x/W*Math.PI)+0.25*Math.sin(x*1.7+z*2.3)+0.2*Math.sin(x*3.1-z*1.4);
+const STEP_X=1.15, STEP_Z=1.0, STEP_Y=0.5;
+for(let y0=0.25;y0<FILL_TOP+1;y0+=STEP_Y)
+ for(let x0=-W/2+0.4;x0<=W/2-0.4;x0+=STEP_X)
+  for(let z0=-D/2+0.4;z0<=D/2-0.3;z0+=STEP_Z){
+    const k=Math.floor(rnd()*shapes.length), {len,wid,th}=shapes[k];
+    const flat=rnd()<0.7;
+    const rx=flat?(rnd()-0.5)*0.9:(rnd()-0.5)*3, rz=flat?(rnd()-0.5)*0.9:(rnd()-0.5)*3, ry=rnd()*Math.PI*2;
+    dummy.rotation.set(rx,ry,rz,'YXZ'); dummy.scale.setScalar(0.85+rnd()*0.3); dummy.updateMatrix();
+    const m=dummy.matrix.elements, e=[len/2,th/2,wid/2];
+    const hx=Math.abs(m[0])*e[0]+Math.abs(m[4])*e[1]+Math.abs(m[8])*e[2]+0.08;
+    const hy=Math.abs(m[1])*e[0]+Math.abs(m[5])*e[1]+Math.abs(m[9])*e[2]+0.08;
+    const hz=Math.abs(m[2])*e[0]+Math.abs(m[6])*e[1]+Math.abs(m[10])*e[2]+0.08;
+    let x=x0+(rnd()-0.5)*STEP_X, z=z0+(rnd()-0.5)*STEP_Z, y=Math.max(hy+0.03,y0+(rnd()-0.5)*STEP_Y);
+    if(y>surface(x,z)) continue;                                      // above the pile
+    // squeeze the piece inside the walls: leaning front and back, and the inward folding sides
+    const zF=D/2-(y+hy)*tanF-0.3-hz, zB=-D/2+(y+hy)*tanF+0.3+hz; if(zB>zF) continue;
+    z=Math.min(zF,Math.max(zB,z));
+    const zn=(z-hz<0&&z+hz>0)?0:Math.min(Math.abs(z-hz),Math.abs(z+hz));
+    const xr=W/2-0.3-gussetIn(y+hy,zn)-hx; if(xr<0) continue;
+    x=Math.min(xr,Math.max(-xr,x));
+    dummy.position.set(x,y,z); dummy.updateMatrix(); lists[k].push(dummy.matrix.clone());
+  }
+shapes.forEach(({g},k)=>{
+  const L=lists[k]; if(!L.length) return;
+  const inst=new THREE.InstancedMesh(g,fishMat,L.length);
+  L.forEach((mt,i)=>{inst.setMatrixAt(i,mt); col.setHSL(0,0,0.85+rnd()*0.3); inst.setColorAt(i,col);});
+  box.add(inst);
+});
+console.log('salmon pieces',lists.reduce((a,l)=>a+l.length,0));
+// clear film over the window (rides on the front panel)
+const v=PX.win, wx=(v.x0+v.x1)/2*S-W/2, wy=FH-(v.y0+v.y1)/2*S;
+// film sits just behind the print, so the logo printed on it keeps its full dark colour
+const fg=new THREE.PlaneGeometry((v.x1-v.x0)*S,(v.y1-v.y0)*S,20,40).translate(wx,wy,-0.03);
+{const p=fg.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,p.getZ(i)+pouch(p.getX(i),p.getY(i),H));fg.computeVertexNormals();}
+const film=new THREE.Mesh(fg,
+  new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:0.1,roughness:0.06,metalness:0,envMap:env,envMapIntensity:1.3,clearcoat:1,depthWrite:false}));
+frontG.add(film);
+
+// soft floor shadow
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:0.12}));
+floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+
+// framing that fits portrait phones and wide screens
+const home=new THREE.Vector3();
+function frame(){
+  const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h); camera.aspect=w/h;
+  const vfov=THREE.MathUtils.degToRad(camera.fov), need=FH*1.32, needW=Math.hypot(W,D)*1.5;
+  const dist=Math.max(need/2/Math.tan(vfov/2), needW/2/(Math.tan(vfov/2)*camera.aspect));
+  home.set(0.32,0.16,1).normalize().multiplyScalar(dist).add(target);
+  controls.minDistance=dist*0.45; controls.maxDistance=dist*1.8; camera.updateProjectionMatrix();
+}
+frame(); camera.position.copy(home); controls.update();
+addEventListener('resize',frame);
+
+const spin=document.getElementById('spin');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function setSpin(on){controls.autoRotate=on;spin.textContent=on?'Pause':'Rotate';spin.setAttribute('aria-pressed',on)}
+if(reduce) setSpin(false);
+spin.onclick=()=>setSpin(!controls.autoRotate);
+document.getElementById('reset').onclick=()=>{camera.position.copy(home);controls.target.copy(target);controls.update()};
+let resume; const hint=document.getElementById('hint');
+controls.addEventListener('start',()=>{hint.style.opacity=0;clearTimeout(resume)});
+controls.addEventListener('end',()=>{if(spin.getAttribute('aria-pressed')==='true'){controls.autoRotate=false;resume=setTimeout(()=>controls.autoRotate=true,2500)}});
+
+document.getElementById('fold').addEventListener('input',e=>setFold(e.target.value/100));
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
+</script>
+
+</body></html>

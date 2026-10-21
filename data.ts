@@ -127,7 +127,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'p4',
-    title: 'Pawly Cat Food',
+    title: 'Pawly',
     date: 'Jan 2026',
     year: '2026',
     category: 'Packaging Design',
@@ -137,6 +137,8 @@ export const PROJECTS: Project[] = [
     ],
     concept: 'The concept draws inspiration from orange cats, known for their playful and expressive personalities. This idea is translated into the packaging through warm tones, character-driven visuals, and a lively composition.',
     problemStatement: 'How might we design cat food packaging that stands out visually on shelves while also improving usability and maintaining product freshness for everyday use?',
+    tldrImage: '/PAWLY/pawly/cat-face-trimmed.png',
+    tldr: 'Packaging for a **dry salmon-based cat food**, inspired by **orange cats** to feel approachable and engaging. Warm tones, character-driven visuals and a lively composition help it stand out in a saturated pet food market while staying practical for everyday use.',
     tech: ['Illustrator', 'Packaging Design', 'Branding', 'Visual Identity'],
     images: [
       '/PAWLY/ChatGPT Image Feb 19, 2026, 10_34_44 PM.png',
