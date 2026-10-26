@@ -8,7 +8,7 @@ export const HERO = {
   artVhDesktop: 0.46,   // character height as a share of the viewport height (desktop)
   artVhMobile: 0.30,    // ...and on a phone
   wordVw: 0.04,         // size of the big rolling words, as a share of the viewport width
-  introMaxPx: 560,      // widest the intro paragraph gets on desktop
+  introMaxPx: 680,      // widest the intro paragraph gets on desktop (it is as wide as this, or as the room beside the character if that is less)
   eyeRangeX: 6,         // how far the pupils may travel sideways (in art pixels, the art is 1024 wide)
   eyeRangeY: 4,         // ...and up / down
   eyeEase: 0.14,        // 0 = never moves, 1 = jumps straight to the target. Lower = smoother, lazier eyes
@@ -323,7 +323,7 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         ? Math.min(vw * HERO.wordVw, vh * 0.12, (cw - 2 * SIDE - gap - artW0) / emMax)
         : Math.min(cw * 0.125, (cw - 48) / emMax);
       const stackPx = stackEm * wordSize;
-      const colW = isDesktop ? Math.min(emMax * wordSize, HERO.introMaxPx) : cw - 48;
+      const colW = isDesktop ? Math.min(cw - 2 * SIDE - gap - artW0, HERO.introMaxPx) : cw - 48;   // stretched across the room left of the character
       const introFont = isDesktop ? Math.max(16, Math.min(vw * 0.0135, 21)) : 15;
       const introGap = isDesktop ? wordSize * 0.3 : 20;
 
@@ -338,9 +338,8 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         }
       }
 
-      // On desktop the character is as tall as the block of text beside it (the two big lines and the intro), so the two line up
-      // top and bottom; on a phone it keeps its own size.
-      const artH = isDesktop ? Math.min(stackPx + introGap + introH, artH0) : artH0;
+      // The character takes the full height it is allowed, and sits level with the middle of the text block beside it.
+      const artH = artH0;
       const BIG = artH / 0.562;                  // box size at which the art is artH tall
       const artW = (0.473 / 0.562) * artH;       // the art's visible width
 
