@@ -4,7 +4,7 @@ import { useNavVisibility } from "./useNavVisibility";
 
 // ── Main values — everything you are likely to want to tweak is in this one block ───────────────
 export const HERO = {
-  showCharacter: false, // false hides the drawing (and its click area); the words and intro line stay where they are
+  showCharacter: true,  // false hides the drawing (and its click area); the words and intro line stay where they are
   artVhDesktop: 0.46,   // character height as a share of the viewport height (desktop)
   artVhMobile: 0.30,    // ...and on a phone
   wordVw: 0.062,        // size of the big rolling words, as a share of the viewport width
