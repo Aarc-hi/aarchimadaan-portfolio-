@@ -7,7 +7,7 @@ export const HERO = {
   showCharacter: true,  // false hides the drawing (and its click area); the words and intro line stay where they are
   artVhDesktop: 0.46,   // character height as a share of the viewport height (desktop)
   artVhMobile: 0.30,    // ...and on a phone
-  wordVw: 0.062,        // size of the big rolling words, as a share of the viewport width
+  wordVw: 0.04,         // size of the big rolling words, as a share of the viewport width
   introMaxPx: 560,      // widest the intro paragraph gets on desktop
   eyeRangeX: 6,         // how far the pupils may travel sideways (in art pixels, the art is 1024 wide)
   eyeRangeY: 4,         // ...and up / down
@@ -307,19 +307,20 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       const isDesktop = vw >= 768;
 
       // ── The first screen ─────────────────────────────────────────────────────────────────────
-      // Desktop: [ character | big words over the intro line ], the whole group centred.
+      // Desktop: [ big words over the intro line | character ], the words on the left and the character on the right,
+      // each held in from the edge by the same side margin as the content of the other pages.
       // Phone:   character, then the big words, then the intro line, one under the other.
-      const artH = isDesktop ? Math.min(vh * HERO.artVhDesktop, cw * 0.36) : Math.min(vh * HERO.artVhMobile, cw * 0.66);
-      const BIG = artH / 0.562;                  // box size at which the art is artH tall
-      const artW = (0.473 / 0.562) * artH;       // the art's visible width
+      const artH0 = isDesktop ? Math.min(vh * HERO.artVhDesktop, cw * 0.36) : Math.min(vh * HERO.artVhMobile, cw * 0.66); // the most height the art may take
+      const artW0 = (0.473 / 0.562) * artH0;
       const SMALL = isDesktop ? 170 : 120;
       const NAV_X = isDesktop ? -16 : -18;
       const NAV_Y = isDesktop ? -18 : -14;
       const gap = isDesktop ? 32 : 0;            // clear of the art even when the mascot tilts toward the cursor
+      const SIDE = Math.max(32, (cw - 1152) / 2); // the side margin of the page's content column (max-w-6xl), at least 32px
       const LINE = 1.06;                         // distance between the two word lines, in em
       const stackEm = LINE + capEm;              // height of the two lines from cap-top to baseline, in em
       const wordSize = isDesktop
-        ? Math.min(vw * HERO.wordVw, vh * 0.12, (cw - 96 - gap - artW) / emMax)
+        ? Math.min(vw * HERO.wordVw, vh * 0.12, (cw - 2 * SIDE - gap - artW0) / emMax)
         : Math.min(cw * 0.125, (cw - 48) / emMax);
       const stackPx = stackEm * wordSize;
       const colW = isDesktop ? Math.min(emMax * wordSize, HERO.introMaxPx) : cw - 48;
@@ -336,6 +337,12 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
           introH = it.offsetHeight;
         }
       }
+
+      // On desktop the character is as tall as the block of text beside it (the two big lines and the intro), so the two line up
+      // top and bottom; on a phone it keeps its own size.
+      const artH = isDesktop ? Math.min(stackPx + introGap + introH, artH0) : artH0;
+      const BIG = artH / 0.562;                  // box size at which the art is artH tall
+      const artW = (0.473 / 0.562) * artH;       // the art's visible width
 
       const startX = (vw - BIG) / 2;
       const startY = (vh - BIG) / 2;
@@ -357,8 +364,7 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       // Where the art's centre ends up, and the vertical centre of the big words (S) and the top of the intro.
       let artCxT: number, artCyT: number, S: number, introTop: number;
       if (isDesktop) {
-        const groupLeft = (cw - (artW + gap + colW)) / 2;
-        artCxT = groupLeft + artW / 2;
+        artCxT = cw - SIDE - artW / 2;                          // the character's right edge sits on the right margin
         artCyT = vh / 2 + 24;                                   // a little below centre: the nav takes the top
         const colH = stackPx + introGap + introH;
         S = artCyT - colH / 2 + stackPx / 2;
@@ -404,10 +410,8 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         rt.style.top = `${S + half}px`;
         lt.style.right = "auto";
         if (isDesktop) {
-          // Anchored to where the mascot's art actually is right now, so the words never overlap it while it is still sliding in.
-          const artNow = startX + dx + 0.5175 * BIG * scale;
-          const artHalfNow = 0.2365 * BIG * scale;
-          const left = `${artNow + artHalfNow + gap}px`;
+          // The words start on the left margin, and the character is on the right.
+          const left = `${SIDE}px`;
           lt.style.left = rt.style.left = left;
           lt.style.textAlign = rt.style.textAlign = "left";
           lt.style.transform = rt.style.transform = `translate3d(${-slide - exit}px, calc(-50% - ${cap}em), 0)`;
