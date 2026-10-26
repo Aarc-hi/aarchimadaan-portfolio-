@@ -5,13 +5,12 @@ import { ViewState } from './types';
 import { EXPERIENCES, PROJECTS } from './data';
 import { TopNav } from './components/TopNav';
 import { Loader } from './components/Loader';
-import { Background } from './components/Background';
 import { ProjectDetailView } from './components/ProjectDetailView';
 import { NotFoundView } from './components/NotFoundView';
 import Aarchi from './assets/aarchi.jpg';
 import { MascotHero, HeroSpacer } from './components/MascotHero';
-import { AboutSection } from './components/AboutSection';
 import { WorksStrip } from './components/WorksStrip';
+import { WorksPage } from './components/WorksPage';
 import { HomeFooter } from './components/HomeFooter';
 import { useHomeSnap } from './components/useHomeSnap';
 import { useIsAtOrPast } from './components/useIsAtOrPast';
@@ -30,17 +29,42 @@ const pageVariants: Variants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
 };
 
+// Every page has its own address (/, /about, /work, /work/pawly, /contact), so the browser's back and forward buttons and shared links work.
+const slugOf = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const pathFor = (view: ViewState, projectId: string | null): string => {
+  if (view === 'identity') return '/about';
+  if (view === 'PROJECTS') return '/work';
+  if (view === 'CONTACT') return '/contact';
+  if (view === 'project-detail' && projectId) {
+    const p = PROJECTS.find((x) => x.id === projectId);
+    if (p) return `/work/${slugOf(p.title)}`;
+  }
+  return view === '404' ? '/404' : '/';
+};
+const parsePath = (pathname: string): { view: ViewState; project: string | null } => {
+  const parts = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+  if (parts.length === 0) return { view: 'HOME', project: null };
+  if (parts[0] === 'about' && parts.length === 1) return { view: 'identity', project: null };
+  if (parts[0] === 'contact' && parts.length === 1) return { view: 'CONTACT', project: null };
+  if (parts[0] === 'work' && parts.length === 1) return { view: 'PROJECTS', project: null };
+  if (parts[0] === 'work' && parts.length === 2) {
+    const slug = parts[1] === 'sitright' ? 'alignr' : parts[1];   // the project's old name still opens it
+    const p = PROJECTS.find((x) => slugOf(x.title) === slug);
+    if (p) return { view: 'project-detail', project: p.id };
+  }
+  return { view: '404', project: null };
+};
+
 const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<ViewState>('HOME');
+  const [view, setView] = useState<ViewState>(() => parsePath(window.location.pathname).view);
   const [hoveredProject, setHoveredProject] = useState<string | null>(null);
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const aboutRef = useRef<HTMLDivElement>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(() => parsePath(window.location.pathname).project);
   const worksRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const [heroReady, setHeroReady] = useState(false);
 
-  useHomeSnap(view === 'HOME', heroReady, aboutRef, worksRef);
+  useHomeSnap(view === 'HOME', heroReady, worksRef);
   // From the Selected Works strip down to the footer the nav stays visible the whole time,
   // whichever way the page last scrolled — everywhere else it reacts to scroll direction.
   const showNavAtWorks = useIsAtOrPast(worksRef, view === 'HOME');
@@ -53,6 +77,28 @@ const App: React.FC = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view]);
+
+  // State -> address bar: a page change adds a history entry (nothing is added when the address already matches, e.g. after back).
+  useEffect(() => {
+    const path = pathFor(view, selectedProject);
+    if (window.location.pathname !== path) window.history.pushState(null, '', path);
+  }, [view, selectedProject]);
+
+  // Back / forward -> state.
+  useEffect(() => {
+    const onPop = () => {
+      const { view: v, project } = parsePath(window.location.pathname);
+      setView(v);
+      setSelectedProject(project);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  useEffect(() => {
+    const p = PROJECTS.find((x) => x.id === selectedProject);
+    document.title = view === 'project-detail' && p ? `${p.title} | Aarchi Madaan` : 'Aarchi Madaan | Interaction Designer';
+  }, [view, selectedProject]);
 
   return (
     <>
@@ -72,7 +118,6 @@ const App: React.FC = () => {
 
       {!loading && (
     <div className="min-h-screen relative font-sans selection:bg-cobalt selection:text-white">
-      <Background />
 
       <TopNav currentView={view} setView={setView} forceShown={showNavAtWorks} />
 
@@ -85,8 +130,7 @@ const App: React.FC = () => {
           {view === 'HOME' && (
             <motion.div key="home" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl flex flex-col justify-center min-h-[60vh]">
                <HeroSpacer />
-               <AboutSection ref={aboutRef} />
-               <WorksStrip ref={worksRef} setView={setView} setSelectedProject={setSelectedProject} aboutRef={aboutRef} footerRef={footerRef} />
+               <WorksStrip ref={worksRef} setView={setView} setSelectedProject={setSelectedProject} footerRef={footerRef} />
                <HomeFooter ref={footerRef} />
             </motion.div>
           )}
@@ -194,6 +238,11 @@ const App: React.FC = () => {
 
           {/* PROJECTS VIEW */}
           {view === 'PROJECTS' && (
+            <WorksPage key="works" setView={setView} setSelectedProject={setSelectedProject} />
+          )}
+
+          {/* The old list of works, kept for now but no longer shown (the Works page above replaced it) */}
+          {false && view === 'PROJECTS' && (
             <motion.div key="projects" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-6xl">
               <div className="mb-12 flex items-baseline gap-4">
                  <h2 className="text-6xl md:text-8xl font-display font-medium tracking-tight">Selected Works</h2>

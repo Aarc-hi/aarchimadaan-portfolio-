@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@100..700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Mallanna&display=swap"
     rel="stylesheet">
   <!-- Carlito: open look-alike of Calibri, used for the live type specimens on the Pawly page -->
   <link href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
         extend: {
           fontFamily: {
             display: ['Alte Haas Grotesk', 'Arial', 'sans-serif'],
-            sans: ['Josefin Sans', 'sans-serif'],
+            sans: ['Mallanna', 'sans-serif'],
           },
           colors: {
             'paper': '#FFFDF5',
@@ -56,6 +56,14 @@
     }
   </script>
   <style>
+    @font-face {
+      font-family: 'Atop';
+      src: url('/fonts/Atop.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     @font-face {
       font-family: 'Alte Haas Grotesk';
       src: url('/fonts/AlteHaasGroteskRegular.ttf') format('truetype');
@@ -93,25 +101,22 @@
 
     body {
       cursor: default;
-      font-family: 'Josefin Sans', sans-serif; /* body text everywhere; the display font is set per element */
-      font-weight: 375;
+      font-family: 'Mallanna', sans-serif; /* body text everywhere; the display font is set per element */
+      font-weight: 400;
     }
     .font-display { font-weight: 400; } /* display text keeps the weight it always had (headings would otherwise inherit the body's weight) */
 
-    /* Josefin Sans is a variable font, so it can be set to any weight. Each Tailwind weight below is the Josefin
-       weight whose stroke is exactly as thick as the same weight in the old body font (Space Grotesk / Mada),
-       measured from their capital I at 600px (stem as a fraction of the font size):
-         normal  0.083 -> 375     light 0.063 -> 335     medium 0.108 -> 510
-         semibold 0.122 -> 620    bold 0.132 -> 665
+    /* Mallanna only comes in one weight (regular). Light, normal and medium all use it as drawn; semibold, bold
+       and black ask for 700, which the browser has to fake by thickening the regular letters.
        (The display font, Alte Haas Grotesk, is excluded: its weights are set as before.) */
-    .font-extralight:not(.font-display) { font-weight: 280; }
-    .font-light:not(.font-display)      { font-weight: 335; }
-    .font-normal:not(.font-display)     { font-weight: 375; }
-    .font-medium:not(.font-display)     { font-weight: 510; }
-    .font-semibold:not(.font-display)   { font-weight: 620; }
+    .font-extralight:not(.font-display),
+    .font-light:not(.font-display),
+    .font-normal:not(.font-display),
+    .font-medium:not(.font-display)     { font-weight: 400; }
+    .font-semibold:not(.font-display),
     .font-bold:not(.font-display),
-    b:not(.font-display), strong:not(.font-display) { font-weight: 665; }
-    .font-black:not(.font-display)      { font-weight: 700; }
+    .font-black:not(.font-display),
+    b:not(.font-display), strong:not(.font-display) { font-weight: 700; }
 
     .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }

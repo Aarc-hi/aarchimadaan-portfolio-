@@ -24,6 +24,7 @@ export interface Project {
   images?: string[];
   mockups?: string[];
   pages?: string[];
+  book?: string[];   // every page in reading order (cover, spreads as left+right, back cover), shown as a book you flip by clicking
   youtubeId?: string;
   videoSrc?: string;
   coverImage?: string;

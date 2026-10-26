@@ -6,7 +6,7 @@ import { isGateLocked, isNewGesture, lockGateFor, extendGate } from './scrollGat
 interface WorksStripProps {
   setView: (view: ViewState) => void;
   setSelectedProject: (id: string) => void;
-  aboutRef: RefObject<HTMLElement>;
+  aboutRef?: RefObject<HTMLElement>; // where "up" leads; with none given it leads to the top of the page (the hero)
   // The footer sits just below the strip: after the last card, one more scroll carries the page up to it.
   footerRef: RefObject<HTMLElement>;
 }
@@ -25,7 +25,7 @@ const COVER_OVERRIDE: Record<string, { src?: string; pos?: string }> = {
   p3: { pos: '60% 45%' },
   p4: { src: '/PAWLY/pawly/cover.jpg' },
 };
-function coverOf(p: Project) {
+export function coverOf(p: Project) {
   const o = COVER_OVERRIDE[p.id];
   return {
     src: o?.src || p.coverImage || p.mockups?.[0] || p.images?.[0] || p.pages?.[0] || '',
@@ -141,7 +141,7 @@ export const WorksStrip = forwardRef<HTMLDivElement, WorksStripProps>(
         }
         requestAnimationFrame(step);
       }
-      const leaveUp = () => movePageTo(aboutRef.current?.offsetTop ?? 0);                 // to the intro text
+      const leaveUp = () => movePageTo(aboutRef?.current?.offsetTop ?? 0);                // back up to the hero
       const goFooter = () => movePageTo(document.documentElement.scrollHeight - window.innerHeight); // to the very bottom
       const backToStrip = () => movePageTo(top());
 

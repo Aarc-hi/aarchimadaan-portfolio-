@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 
 export const Loader: React.FC = () => {
   const [count, setCount] = useState(0);
@@ -30,29 +29,14 @@ export const Loader: React.FC = () => {
         {[0, 1, 2, 3, 4].map((index) => (
             <div
                 key={index}
-                className="flex-1 bg-[#FFFDF5] border-r border-black/5 last:border-r-0 relative overflow-hidden"
-            >
-               {/* Decorative subtle vertical line inside each blind */}
-               <div className="absolute inset-y-0 left-1/2 w-[1px] bg-black/5 transform -translate-x-1/2" />
-            </div>
+                className="flex-1 bg-[#FFFDF5] relative overflow-hidden"
+            />
         ))}
 
         {/* Content Overlay - Dark Text for Light Theme */}
-        <div className="absolute inset-0 flex flex-col justify-between p-8 md:p-16 text-[#1A1A1A]">
-            {/* Top */}
-            <div className="flex justify-between items-start overflow-hidden">
-                <motion.span
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 0.5 }}
-                     transition={{ delay: 0.5 }}
-                     className="ml-auto font-sans text-xs tracking-wide hidden md:block"
-                >
-                    Portfolio 2025
-                </motion.span>
-            </div>
-
-            {/* Center: Minimal Focus */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs md:max-w-lg">
+        <div className="absolute inset-0 text-[#1A1A1A]">
+            {/* Bottom: the loading bar, the full width of the page */}
+            <div className="absolute bottom-8 md:bottom-16 left-8 right-8 md:left-16 md:right-16">
                 <div className="flex justify-between items-end mb-2 font-sans text-xs opacity-70">
                     <span>Loading</span>
                     <span>{Math.round(count)}%</span>

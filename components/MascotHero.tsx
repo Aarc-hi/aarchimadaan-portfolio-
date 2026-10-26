@@ -1,9 +1,28 @@
 import React, { useEffect, useRef } from "react";
-import { isGateLocked, lockGateFor, extendGate } from "./scrollGate";
+import { extendGate } from "./scrollGate";
 import { useNavVisibility } from "./useNavVisibility";
 
+// ── Main values — everything you are likely to want to tweak is in this one block ───────────────
+export const HERO = {
+  showCharacter: false, // false hides the drawing (and its click area); the words and intro line stay where they are
+  artVhDesktop: 0.46,   // character height as a share of the viewport height (desktop)
+  artVhMobile: 0.30,    // ...and on a phone
+  wordVw: 0.062,        // size of the big rolling words, as a share of the viewport width
+  introMaxPx: 560,      // widest the intro paragraph gets on desktop
+  eyeRangeX: 6,         // how far the pupils may travel sideways (in art pixels, the art is 1024 wide)
+  eyeRangeY: 4,         // ...and up / down
+  eyeEase: 0.14,        // 0 = never moves, 1 = jumps straight to the target. Lower = smoother, lazier eyes
+  eyeFullTiltPx: 420,   // distance from the eyes at which the pupils reach the edge of their range
+  flourishMinMs: 9000,  // the character pulls a quick face (grin, tongue, whistle...) every so often
+  flourishMaxMs: 16000,
+};
+
 // ── Frame map ──────────────────────────────────────────────────────────────
+// 0 is not one of your drawings: it is frame 11 with the two pupils painted out, so that live pupils
+// (the <ellipse>s further down) can move over it.
+const ATTENTIVE = 0;
 const FRAMES: Record<number, string> = {
+   0: "/mascot/frame_11_open_eyes_nopupil.png",
    1: "/mascot/frame_1_smile.png",
    2: "/mascot/frame_2_tongue.png",
    3: "/mascot/frame_3_grin.png",
@@ -19,26 +38,17 @@ const FRAMES: Record<number, string> = {
   13: "/mascot/frame_13_half_blink.png",
 };
 
-// ── Animation sequence ─────────────────────────────────────────────────────
-const SEQUENCE: { n: number; ms: number }[] = [
-  { n: 11, ms: 800  },
-  { n: 12, ms: 110  },
-  { n: 13, ms: 130  },
-  { n: 12, ms: 110  },
-  { n: 13, ms: 150  },
-  { n:  3, ms: 600  },
-  { n:  9, ms: 1200 },
-  { n: 10, ms: 750  },
-  { n:  8, ms: 420  },
-  { n:  4, ms: 420  },
-  { n:  8, ms: 420  },
-  { n:  4, ms: 420  },
-  { n:  5, ms: 600  },
-  { n:  4, ms: 380  },
-  { n:  1, ms: 720  },
-  { n:  2, ms: 820  },
-  { n:  3, ms: 600  },
+// Short faces she pulls now and then while she is otherwise just watching you.
+const FLOURISHES: { n: number; ms: number }[][] = [
+  [{ n: 3, ms: 900 }],                                                                       // grin
+  [{ n: 1, ms: 700 }, { n: 2, ms: 900 }],                                                    // smile, tongue
+  [{ n: 9, ms: 1000 }, { n: 10, ms: 800 }],                                                  // donut, whistle
+  [{ n: 8, ms: 420 }, { n: 4, ms: 420 }, { n: 8, ms: 420 }, { n: 4, ms: 500 }],              // quirk / smirk
 ];
+
+// Where the two pupils sit in frame 11, in the art's own 1024 x 1024 pixels.
+const EYES = [{ x: 441, y: 489 }, { x: 555, y: 490 }];
+const EYE_CENTER_Y = 492; // the middle of the eyes, for working out which way to look
 
 // The headline reads "<word> [mascot] DESIGNER". The word on the left rolls through the
 // disciplines one at a time and stops on the last one; DESIGNER on the right never changes.
@@ -49,10 +59,13 @@ const HERO_ROLL_MS = 220;                          // how long one word takes to
 const hero_hold = (k: number) => 300 + 320 * Math.pow(k / HERO_LAST_IDX, 2); // 300ms at the start, easing to 620ms
 const HERO_REEL_MASK = "linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%)";
 
+const INTRO = "Hi, I'm Aarchi - a brand & interaction designer. I turn messy problems into experiences people get right away. Find me a problem worth solving, put my music on, and I disappear until it's done.";
+
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+// The works strip starts one screen down; this is the screen the hero lives on.
 export const HeroSpacer: React.FC = () => (
   <div style={{ height: "100vh", pointerEvents: "none", flexShrink: 0 }} aria-hidden="true" />
 );
@@ -85,13 +98,17 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
   const tiltRef      = useRef<HTMLDivElement>(null);
   const breatheRef   = useRef<HTMLDivElement>(null);
   const imgRef       = useRef<HTMLImageElement>(null);
+  const pupilsRef    = useRef<SVGSVGElement>(null);
+  const pupilL       = useRef<SVGEllipseElement>(null);
+  const pupilR       = useRef<SVGEllipseElement>(null);
   const textRef      = useRef<HTMLDivElement>(null);
   const leftRef      = useRef<HTMLDivElement>(null); // the rolling word, left of the mascot
   const stripRef     = useRef<HTMLDivElement>(null);
+  const introRef     = useRef<HTMLParagraphElement>(null);
 
   // Animation state refs
-  const seqIdxRef       = useRef(0);
   const seqTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flourishRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const interruptedRef  = useRef(false);
   const preloaded       = useRef<Record<number, HTMLImageElement>>({});
   const curTiltX        = useRef(0);
@@ -100,6 +117,7 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
   const tgtTiltY        = useRef(0);
   const rafRef          = useRef<number>(0);
   const progressRef     = useRef(0); // 0 = hero, 1 = corner
+  const reduceMotionRef = useRef(false);
 
   // ── Preload all frames ───────────────────────────────────────────
   useEffect(() => {
@@ -111,27 +129,45 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
   }, []);
 
   // ── Frame switcher (hard-cut, rAF-synced) ───────────────────────
+  // The live pupils only make sense on frame 0; every other frame has its own eyes drawn in.
   function showFrame(n: number) {
     if (!FRAMES[n] || !imgRef.current) return;
     requestAnimationFrame(() => {
       if (imgRef.current) imgRef.current.src = preloaded.current[n]?.src ?? FRAMES[n];
+      if (pupilsRef.current) pupilsRef.current.style.opacity = n === ATTENTIVE ? "1" : "0";
     });
   }
 
-  // ── Sequence loop ────────────────────────────────────────────────
-  function tick() {
-    if (interruptedRef.current) return;
-    const step = SEQUENCE[seqIdxRef.current];
-    showFrame(step.n);
-    seqIdxRef.current = (seqIdxRef.current + 1) % SEQUENCE.length;
-    seqTimerRef.current = setTimeout(tick, step.ms);
+  // ── Flourishes: every so often she pulls a quick face, then goes back to watching you ──
+  function scheduleFlourish() {
+    if (reduceMotionRef.current) return;
+    if (flourishRef.current) clearTimeout(flourishRef.current);
+    flourishRef.current = setTimeout(playFlourish, HERO.flourishMinMs + Math.random() * (HERO.flourishMaxMs - HERO.flourishMinMs));
+  }
+  function playFlourish() {
+    if (interruptedRef.current) { scheduleFlourish(); return; }
+    const seq = FLOURISHES[Math.floor(Math.random() * FLOURISHES.length)];
+    let i = 0;
+    const step = () => {
+      if (interruptedRef.current) return;
+      if (i < seq.length) {
+        showFrame(seq[i].n);
+        seqTimerRef.current = setTimeout(step, seq[i].ms);
+        i += 1;
+      } else {
+        showFrame(ATTENTIVE);
+        scheduleFlourish();
+      }
+    };
+    step();
   }
 
-  // ── Click reaction: 06 → 07 → resume ────────────────────────────
+  // ── Click reaction: 06 → 07 → back to watching ──────────────────
   function handleClick() {
     if (interruptedRef.current) return;
     interruptedRef.current = true;
     if (seqTimerRef.current) clearTimeout(seqTimerRef.current);
+    if (flourishRef.current) clearTimeout(flourishRef.current);
     showFrame(6);
     if (breatheRef.current) breatheRef.current.setAttribute("data-state", "dizzy");
     setTimeout(() => {
@@ -140,26 +176,30 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       setTimeout(() => {
         if (breatheRef.current) breatheRef.current.removeAttribute("data-state");
         interruptedRef.current = false;
-        tick();
+        showFrame(ATTENTIVE);
+        scheduleFlourish();
       }, 900);
     }, 700);
   }
 
-  // ── Scroll-driven: hero → corner ────────────────────────────────
+  // ── Layout: hero → corner on scroll ──────────────────────────────
   useEffect(() => {
     const SCROLL_DIST = 450; // px to fully shrink into corner
     const SMOOTH = 0.18;     // per-frame catch-up toward the scroll position (~580ms to settle)
     let targetRaw = 0;
     let shownRaw  = 0;
-    let stageTarget = 0;
+    let stageTarget = 0; // 0 = the mascot is centred on its own, 1 = settled beside the words and intro
     let stageShown  = 0;
     let frame     = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reduceMotionRef.current = reduceMotion;
 
     // Text metrics, in em.
     //   emMax    width of the widest word on either side (the font size has to fit this)
     //   capOffset how far the middle of the capital letters sits below the middle of the text box
     let emMax = 5.7, emLeftFinal = 5.7, emRight = 4.6, capOffset = 0, capEm = 0.72;
     let cornerVis = 1; // 1 while the mascot is allowed to sit in the corner, eases to 0 when it is hidden on purpose
+    let introKey = "", introH = 0; // the intro paragraph is measured only when its width or font size changes
     function measureText() {
       const t = textRef.current;
       if (!t) return;
@@ -186,12 +226,13 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       }
     }
     measureText();
-    document.fonts?.ready.then(() => { measureText(); layout(); });
+    document.fonts?.ready.then(() => { measureText(); introKey = ""; layout(); });
 
     // One-time entrance: mascot rises up into place as the loader lifts away
     const ENTRANCE_MS = 1200; // matches the loader's slide-up
     const entranceStart = performance.now();
     function entranceOffset() {
+      if (reduceMotion) return 0;
       const t = Math.min(1, (performance.now() - entranceStart) / ENTRANCE_MS);
       const eased = easeInOutCubic(t); // same feel as the loader's curve
       return (1 - eased) * 420; // px below resting position, eases to 0
@@ -205,7 +246,6 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
     const FOOT_BOUNCE_MS = 700;  // one bounce on the dot
     const FOOT_SETTLE_MS = 750;  // dot -> after the word
     const DOT_U = 0.982, DOT_V = 0.085; // where the dot sits on the logotype (fraction of its width / height)
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let fActive = false, fStart = 0, fLeaveAt = 0, fWeight = 0;
     let fFrom = { cx: 0, b: 0 };                                   // art centre-x and bottom when it set off
     let fLast = { dx: 0, dy: 0, sx: 1, sy: 1 };                    // the last transform the footer path produced
@@ -256,18 +296,49 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       return { ...fLast, w: fActive ? 1 : easeInOutCubic(fWeight) };
     }
 
+    // The mascot art spans 28.1%–75.4% across its box and 21.9%–78.1% down it (centre 51.75% / 50%).
     function layout() {
       const el = wrapperRef.current;
       if (!el) return;
 
-      const isDesktop = window.innerWidth >= 768;
-      const BIG   = Math.min(window.innerWidth * (isDesktop ? 0.80 : 0.72), 460);
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cw = document.documentElement.clientWidth; // page width without the scrollbar
+      const isDesktop = vw >= 768;
+
+      // ── The first screen ─────────────────────────────────────────────────────────────────────
+      // Desktop: [ character | big words over the intro line ], the whole group centred.
+      // Phone:   character, then the big words, then the intro line, one under the other.
+      const artH = isDesktop ? Math.min(vh * HERO.artVhDesktop, cw * 0.36) : Math.min(vh * HERO.artVhMobile, cw * 0.66);
+      const BIG = artH / 0.562;                  // box size at which the art is artH tall
+      const artW = (0.473 / 0.562) * artH;       // the art's visible width
       const SMALL = isDesktop ? 170 : 120;
       const NAV_X = isDesktop ? -16 : -18;
       const NAV_Y = isDesktop ? -18 : -14;
+      const gap = isDesktop ? 32 : 0;            // clear of the art even when the mascot tilts toward the cursor
+      const LINE = 1.06;                         // distance between the two word lines, in em
+      const stackEm = LINE + capEm;              // height of the two lines from cap-top to baseline, in em
+      const wordSize = isDesktop
+        ? Math.min(vw * HERO.wordVw, vh * 0.12, (cw - 96 - gap - artW) / emMax)
+        : Math.min(cw * 0.125, (cw - 48) / emMax);
+      const stackPx = stackEm * wordSize;
+      const colW = isDesktop ? Math.min(emMax * wordSize, HERO.introMaxPx) : cw - 48;
+      const introFont = isDesktop ? Math.max(16, Math.min(vw * 0.0135, 21)) : 15;
+      const introGap = isDesktop ? wordSize * 0.3 : 20;
 
-      const startX = (window.innerWidth  - BIG) / 2;
-      const startY = (window.innerHeight - BIG) / 2;
+      const it = introRef.current;
+      if (it) {
+        const key = `${Math.round(colW)}|${introFont}`;
+        if (key !== introKey) {
+          introKey = key;
+          it.style.width = `${colW}px`;
+          it.style.fontSize = `${introFont}px`;
+          introH = it.offsetHeight;
+        }
+      }
+
+      const startX = (vw - BIG) / 2;
+      const startY = (vh - BIG) / 2;
 
       // Fixed box at hero size; travel + shrink via GPU transform only
       el.style.width  = `${BIG}px`;
@@ -283,37 +354,32 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       cornerVis += ((forceHiddenRef.current ? 0 : 1) - cornerVis) * 0.12;
       document.documentElement.style.setProperty("--mascot-corner", (p * cornerVis).toFixed(4));
 
-      // The mascot art spans 28%–75% across its box and 22%–78% down it. The two words sit to its
-      // right, one above the other: the rolling word on top, DESIGNER below, both left-aligned.
-      // On the first scroll the mascot slides left AND shrinks until the art is exactly as tall as the
-      // two lines: its top level with the top of the rolling word, its bottom with the bottom of
-      // DESIGNER. Then the whole thing — mascot plus words — is centred on the page.
-      const vw0 = window.innerWidth;
-      const cw = document.documentElement.clientWidth; // page width without the scrollbar
-      const gap = 24; // clear of the art even when the mascot tilts toward the cursor
-      const LINE = 1.06; // distance between the two lines, in em
-      const stackH = (LINE + capEm); // height of the two lines from cap-top to baseline, in em
-      // the shrunken art is 0.473·BIG·s wide and 0.562·BIG·s tall, with s chosen so that height = stackH·wordSize
-      const GROW = 1.07; // a touch taller than the two lines, evenly above and below
-      const artWEm = (0.473 / 0.562) * stackH * GROW; // its width, in em of the word size
-      const wordSize = Math.min(vw0 * (vw0 >= 900 ? 0.05 : 0.09), (cw - 48 - gap) / (emMax + artWEm));
-      const sFinal = (stackH * wordSize * GROW) / (0.562 * BIG); // mascot scale once it has settled beside the words
-      const s1 = 1 + (sFinal - 1) * stageShown;           // ...and how far along it is right now
-      const scale = s1 + (SMALL / BIG - s1) * p;          // then the corner travel takes over
-      // Centre on how the group LOOKS, not on its bounding box: DESIGNER is shorter than INTERACTION, which
-      // leaves a gap under the long word's right end, so the average of the two line widths is used. The
-      // bounding box then sits a little right of centre, which is what makes it look centred.
-      const stackW = ((emLeftFinal + emRight) / 2) * wordSize;
-      const balance = -(gap + stackW) / 2; // where the art's centre ends up, relative to the page centre
+      // Where the art's centre ends up, and the vertical centre of the big words (S) and the top of the intro.
+      let artCxT: number, artCyT: number, S: number, introTop: number;
+      if (isDesktop) {
+        const groupLeft = (cw - (artW + gap + colW)) / 2;
+        artCxT = groupLeft + artW / 2;
+        artCyT = vh / 2 + 24;                                   // a little below centre: the nav takes the top
+        const colH = stackPx + introGap + introH;
+        S = artCyT - colH / 2 + stackPx / 2;
+        introTop = S + stackPx / 2 + introGap;
+      } else {
+        const below = 26;                                       // clear of the hair even while she bobs
+        const total = artH + below + stackPx + introGap + introH;
+        const top = Math.max(88, (vh - total) / 2 + 28);
+        artCxT = cw / 2;
+        artCyT = top + artH / 2;
+        S = top + artH + below + stackPx / 2;
+        introTop = S + stackPx / 2 + introGap;
+      }
 
-      // The box scales from its top-left corner, so work out where its corner has to be for the art's
-      // centre to land where we want it: across at artCx, and still on the screen's middle line down.
-      const artC0 = startX + 0.5175 * BIG;            // art centre before any scrolling
-      // art centre once settled — but never so far right that the long word runs off the page
-      const artCT = Math.min(cw / 2 + balance, cw - 24 - gap - Math.max(emLeftFinal, emRight) * wordSize - 0.2365 * BIG * sFinal);
-      const artCx = artC0 + (artCT - artC0) * stageShown;
-      const dxStage = artCx - startX - 0.5175 * BIG * s1;
-      const dyStage = 0.5 * BIG * (1 - s1);
+      const artC0 = startX + 0.5175 * BIG;                      // art centre before the entrance settles: the screen's middle
+      const cx = artC0 + (artCxT - artC0) * stageShown;
+      const cy = vh / 2 + (artCyT - vh / 2) * stageShown;
+      const s1 = 1;
+      const scale = s1 + (SMALL / BIG - s1) * p;                // then the corner travel takes over
+      const dxStage = cx - startX - 0.5175 * BIG * s1;
+      const dyStage = cy - startY - 0.5 * BIG * s1;
       const dx = dxStage * (1 - p) + (NAV_X - startX) * p;
       const dy = dyStage * (1 - p) + (NAV_Y - startY) * p + entranceOffset();
       const ft = footerFrame(BIG, SMALL / BIG, startX, startY, dx, dy, scale, p, cw);
@@ -328,26 +394,31 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       if (lt && rt) {
         const opacity = String(stageShown * Math.max(0, 1 - p * 3));
         const cap = capOffset.toFixed(4);
-        const slide = (1 - stageShown) * 48; // words slide out from behind the mascot
-        const exit = p * 60;
-        for (const el of [lt, rt]) { el.style.fontSize = `${wordSize}px`; el.style.opacity = opacity; }
-        // Anchor the words to where the mascot's art actually is right now (not where it will end
-        // up), so they can never overlap it while it is still sliding into place.
-        const artNow = startX + dx + 0.5175 * BIG * scale;
-        const artHalfNow = 0.2365 * BIG * scale;
-        const left = `${artNow + artHalfNow + gap}px`;
-        // The art's centre on the screen's middle line. The words float up and down in step with the
-        // mascot (same timing, scaled to its current size), so their tops and bottoms stay level with it.
-        const mid = startY + BIG / 2;
-        for (const el of [lt, rt]) el.style.setProperty("--bob", `${(12 * scale).toFixed(2)}px`);
+        const slide = (1 - stageShown) * (isDesktop ? 48 : 24); // words slide out from behind the mascot (up from below on a phone)
+        const exit = p * (isDesktop ? 60 : 40);
+        for (const e of [lt, rt]) { e.style.fontSize = `${wordSize}px`; e.style.opacity = opacity; }
+        // The words float up and down in step with the mascot (same timing, scaled to its current size).
+        for (const e of [lt, rt]) e.style.setProperty("--bob", `${(12 * scale).toFixed(2)}px`);
         const half = (LINE / 2) * wordSize; // half the distance between the two lines
-        lt.style.left = rt.style.left = left;
+        lt.style.top = `${S - half}px`;
+        rt.style.top = `${S + half}px`;
         lt.style.right = "auto";
-        lt.style.textAlign = "left";
-        lt.style.top = `${mid - half}px`;
-        rt.style.top = `${mid + half}px`;
-        const tf = `translate3d(${-slide - exit}px, calc(-50% - ${cap}em), 0)`;
-        lt.style.transform = rt.style.transform = tf;
+        if (isDesktop) {
+          // Anchored to where the mascot's art actually is right now, so the words never overlap it while it is still sliding in.
+          const artNow = startX + dx + 0.5175 * BIG * scale;
+          const artHalfNow = 0.2365 * BIG * scale;
+          const left = `${artNow + artHalfNow + gap}px`;
+          lt.style.left = rt.style.left = left;
+          lt.style.textAlign = rt.style.textAlign = "left";
+          lt.style.transform = rt.style.transform = `translate3d(${-slide - exit}px, calc(-50% - ${cap}em), 0)`;
+          if (it) { it.style.left = left; it.style.textAlign = "left"; it.style.transform = `translate3d(${-slide - exit}px, 0, 0)`; }
+        } else {
+          lt.style.left = rt.style.left = `${cw / 2}px`;
+          lt.style.textAlign = rt.style.textAlign = "center";
+          lt.style.transform = rt.style.transform = `translate3d(-50%, calc(-50% - ${cap}em + ${slide - exit}px), 0)`;
+          if (it) { it.style.left = `${cw / 2}px`; it.style.textAlign = "center"; it.style.transform = `translate3d(-50%, ${slide - exit}px, 0)`; }
+        }
+        if (it) { it.style.top = `${introTop}px`; it.style.opacity = opacity; }
       }
 
       progressRef.current = shownRaw;
@@ -356,57 +427,25 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
     function loop() {
       if (!isHomeRef.current) {
         // Any page other than Home: mascot stays parked in the corner
-        if (holding) hold(false);
         stageTarget = 1;
         targetRaw = 1;
       } else {
-        // Scroll position restored after mount (reload / back): skip the intro stage
-        if (stageTarget === 0 && stageShown === 0 && window.scrollY > 8) {
-          stageTarget = 1;
-          stageShown = 1;
-          hold(false);
-        }
+        // Scrolling away from the top finishes the entrance on the spot, so a scroll that arrives while the words are
+        // still easing in (slow frame rate, quick visitor) can never leave the mascot stranded in the middle.
+        if (stageTarget === 1 && window.scrollY > 8) stageShown = 1;
         targetRaw = stageShown > 0.98
           ? Math.min(Math.max(window.scrollY / SCROLL_DIST, 0), 1)
           : 0;
       }
       shownRaw += (targetRaw - shownRaw) * SMOOTH;
       if (Math.abs(targetRaw - shownRaw) < 0.0005) shownRaw = targetRaw;
-      stageShown += (stageTarget - stageShown) * 0.2; // ~520ms to settle — was 0.07 (~1.6s), the main cause of "scroll doesn't respond"
+      stageShown += (stageTarget - stageShown) * 0.2; // ~520ms to settle
       if (Math.abs(stageTarget - stageShown) < 0.001) {
-        if (stageShown !== stageTarget) {
-          // Stage just visually settled (either direction) — prime the shared grace
-          // window so trailing momentum from this same gesture can't immediately
-          // cascade into the NEXT stage owned by useHomeSnap/WorksStrip.
-          extendGate();
-        }
+        if (stageShown !== stageTarget) extendGate(); // prime the shared grace window so trailing momentum can't cascade into the next stage
         stageShown = stageTarget;
-        // Release the page as soon as a REAL stage transition visually settles — for BOTH
-        // directions. triggeredAt > 0 excludes the trivial stageTarget===stageShown===0
-        // equality that's already true at mount (without that guard this fired on the
-        // first frame and released the page's initial hold before any scroll happened).
-        // No extra fixed wait on top of settling — that used to add up to ~900ms of dead
-        // time after the visual animation was already done; the shared scrollGate's own
-        // grace window (extendGate, above) already absorbs trailing scroll momentum.
-        if (holding && triggeredAt > 0) hold(false);
       }
       layout();
       frame = requestAnimationFrame(loop);
-    }
-
-    // Stage gate: at the top the page can't scroll; the first scroll input (any size)
-    // only reveals "Interaction". Once it has settled, native scrolling is released.
-    const html = document.documentElement;
-    const prevOverflow = html.style.overflowY;
-    const prevGutter   = html.style.scrollbarGutter;
-    html.style.scrollbarGutter = "stable";
-
-    let holding     = false;
-    let triggeredAt = 0;
-
-    function hold(on: boolean) {
-      holding = on;
-      html.style.overflowY = on ? "hidden" : "";
     }
 
     // The left word rolls up one word at a time, each held long enough to read (300ms, easing
@@ -425,7 +464,7 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
     function cycleWords() {
       const strip = stripRef.current;
       if (rollTimer) { clearTimeout(rollTimer); rollTimer = null; }
-      if (!strip || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { parkStrip(); return; }
+      if (!strip || reduceMotion) { parkStrip(); return; }
       strip.style.transition = "none";
       strip.style.transform = "translateY(0em)"; // first word
       void strip.offsetHeight;                   // commit that jump before animating
@@ -439,78 +478,59 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       rollTimer = setTimeout(next, hero_hold(0));
     }
 
-    function trigger(v: number) {
-      stageTarget = v;
-      triggeredAt = performance.now();
-      hold(true);
-      lockGateFor(700); // covers the lerp-based reveal/reverse settling (~520ms) with margin
-      if (v === 1) { onIntroRevealedRef.current?.(); cycleWords(); }
-      else stopCycle();
+    // The scrollbar gutter is reserved so the page does not jump sideways when it appears.
+    const html = document.documentElement;
+    const prevGutter = html.style.scrollbarGutter;
+    html.style.scrollbarGutter = "stable";
+
+    // The mascot rises into the middle, then slides left as the words and the intro line come out from behind it.
+    let revealTimer: ReturnType<typeof setTimeout> | null = null;
+    function reveal() {
+      stageTarget = 1;
+      if (reduceMotion) stageShown = 1;
+      cycleWords();
+      onIntroRevealedRef.current?.();
     }
-
-    function intent(down: boolean, up: boolean, ev?: WheelEvent) {
-      if (!isHomeRef.current) return;
-      if (isGateLocked(ev)) { extendGate(); return; } // another stage's transition owns input right now
-      // A few pixels of drift off the very top (a stray native scroll) would otherwise leave the page stuck here
-      // with the first scroll ignored — nudge it back to 0 instead.
-      if (stageShown === stageTarget && window.scrollY > 2 && window.scrollY < 40) window.scrollTo(0, 0);
-      if (stageShown !== stageTarget || window.scrollY > 2) return;
-      if (stageTarget === 0 && down) trigger(1);
-      else if (stageTarget === 1 && up) trigger(0);
+    if (window.scrollY > 8 || reduceMotion) {
+      stageTarget = 1; stageShown = 1;                          // restored mid-page (reload), or no motion wanted: skip the entrance
+      targetRaw = Math.min(window.scrollY / SCROLL_DIST, 1);
+      shownRaw = targetRaw;
+      reveal();
+    } else {
+      revealTimer = setTimeout(reveal, 650);
     }
-
-    function onWheel(e: WheelEvent) { intent(e.deltaY > 0, e.deltaY < -20, e); }
-
-    let touchY = 0;
-    function onTouchStart(e: TouchEvent) { touchY = e.touches[0].clientY; }
-    function onTouchMove(e: TouchEvent) {
-      const dy = touchY - e.touches[0].clientY; // >0 = finger up = scroll down
-      if (Math.abs(dy) < 6) return;
-      intent(dy > 0, dy < -20);
-    }
-
-    function onKey(e: KeyboardEvent) {
-      const down = ["ArrowDown", "PageDown", " ", "End"].includes(e.key);
-      const up   = ["ArrowUp", "PageUp", "Home"].includes(e.key);
-      if (down || up) intent(down, up);
-    }
-
-    window.addEventListener("wheel", onWheel, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("keydown", onKey);
     window.addEventListener("resize", layout);
-
-    // Restored mid-page (reload): skip the intro stage.
-    stageTarget = window.scrollY > 8 ? 1 : 0;
-    stageShown  = stageTarget;
-    targetRaw   = stageTarget ? Math.min(window.scrollY / SCROLL_DIST, 1) : 0;
-    shownRaw    = targetRaw;
-    hold(stageTarget === 0);
-    if (stageTarget === 1) onIntroRevealedRef.current?.();
     layout();
     frame = requestAnimationFrame(loop);
 
     return () => {
+      if (revealTimer) clearTimeout(revealTimer);
       stopCycle();
       cancelAnimationFrame(frame);
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", layout);
-      html.style.overflowY = prevOverflow;
       html.style.scrollbarGutter = prevGutter;
     };
   }, []);
 
-  // ── 3D tilt + breathe render loop ───────────────────────────────
+  // ── Tilt, eyes and the first expression ─────────────────────────
   useEffect(() => {
-    tick();
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const hasMouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-    function animateTilt() {
-      const LERP = 0.09;
+    // She wakes up: eyes shut for a moment, then open and watching.
+    if (reduceMotion) {
+      showFrame(5);                                             // just the neutral face
+    } else {
+      showFrame(12);
+      seqTimerRef.current = setTimeout(() => { showFrame(ATTENTIVE); scheduleFlourish(); }, 900);
+    }
+
+    let mouseX = 0, mouseY = 0, mouseSeen = false;
+    let eyeX = 0, eyeY = 0; // current pupil offset, in art pixels
+
+    function animate(now: number) {
       // Fade out tilt as mascot approaches corner
+      const LERP = 0.09;
       const tiltScale = Math.max(0, 1 - progressRef.current * 2.5);
       curTiltX.current += (tgtTiltX.current * tiltScale - curTiltX.current) * LERP;
       curTiltY.current += (tgtTiltY.current * tiltScale - curTiltY.current) * LERP;
@@ -518,23 +538,52 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         tiltRef.current.style.transform =
           `rotateX(${curTiltX.current.toFixed(3)}deg) rotateY(${curTiltY.current.toFixed(3)}deg)`;
       }
-      rafRef.current = requestAnimationFrame(animateTilt);
-    }
-    rafRef.current = requestAnimationFrame(animateTilt);
 
+      // Pupils: look at the cursor, within a small range, eased. With no mouse (a phone) they drift about on their own.
+      const L = pupilL.current, R = pupilR.current, w = wrapperRef.current;
+      if (L && R && w && !reduceMotion) {
+        let tx = 0, ty = 0;
+        if (hasMouse && mouseSeen) {
+          const r = w.getBoundingClientRect();
+          const ex = r.left + (498 / 1024) * r.width;
+          const ey = r.top + (EYE_CENTER_Y / 1024) * r.height;
+          const dx = mouseX - ex, dy = mouseY - ey;
+          const dist = Math.hypot(dx, dy) || 1;
+          const k = Math.min(1, dist / HERO.eyeFullTiltPx);
+          tx = (dx / dist) * k * HERO.eyeRangeX;
+          ty = (dy / dist) * k * HERO.eyeRangeY;
+        } else if (!hasMouse) {
+          const t = now / 1000;
+          tx = Math.sin(t * 0.7) * HERO.eyeRangeX * 0.85;
+          ty = Math.sin(t * 0.43 + 1.3) * HERO.eyeRangeY * 0.6;
+        }
+        eyeX += (tx - eyeX) * HERO.eyeEase;
+        eyeY += (ty - eyeY) * HERO.eyeEase;
+        const t = `translate(${eyeX.toFixed(2)}px, ${eyeY.toFixed(2)}px)`;
+        L.style.transform = t;
+        R.style.transform = t;
+      }
+      rafRef.current = requestAnimationFrame(animate);
+    }
+    rafRef.current = requestAnimationFrame(animate);
+
+    // Mouse events only store the position; the rAF loop above does the work, so nothing is throttled by hand.
     const onMove = (e: MouseEvent) => {
+      mouseX = e.clientX; mouseY = e.clientY; mouseSeen = true;
+      if (reduceMotion) return;
       const nx = (e.clientX - window.innerWidth  / 2) / (window.innerWidth  / 2);
       const ny = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
       tgtTiltY.current =  nx * 15;
       tgtTiltX.current = -ny * 15;
     };
-    const onLeave = () => { tgtTiltX.current = 0; tgtTiltY.current = 0; };
+    const onLeave = () => { tgtTiltX.current = 0; tgtTiltY.current = 0; mouseSeen = false; };
 
-    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("mouseleave", onLeave);
 
     return () => {
       if (seqTimerRef.current) clearTimeout(seqTimerRef.current);
+      if (flourishRef.current) clearTimeout(flourishRef.current);
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseleave", onLeave);
@@ -544,19 +593,18 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
 
   return (
     <>
-      {/* ── Fixed mascot — travels from center to top-left on scroll ── */}
+      {/* ── Fixed mascot — centred on the first screen, travels to the top-left corner on scroll ── */}
       <div
         ref={wrapperRef}
-        onClick={isHome ? handleClick : onHome}
         style={{
           position:    "fixed",
           zIndex:      45,
-          cursor:      "pointer",
           perspective: "900px",
           transformOrigin: "top left",
           willChange: "transform",
+          visibility: HERO.showCharacter ? "visible" : "hidden",
           opacity: navHidden ? 0 : 1,
-          pointerEvents: navHidden ? "none" : "auto",
+          pointerEvents: "none",
           transition: "opacity 300ms ease-out",
         }}
       >
@@ -569,11 +617,11 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
           <div
             ref={breatheRef}
             className="mascot-breathe"
-            style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{ position: "relative", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <img
               ref={imgRef}
-              src={FRAMES[11]}
+              src={FRAMES[12]}
               alt="Mascot"
               draggable={false}
               style={{
@@ -585,11 +633,33 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
                 display: "block",
               }}
             />
+            {/* The live pupils, laid over frame 0. They sit under the eyelid line and hang from it, so a small
+                move up or down never leaves a gap. Shown only while frame 0 is up. */}
+            <svg
+              ref={pupilsRef}
+              viewBox="0 0 1024 1024"
+              aria-hidden="true"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0 }}
+            >
+              <ellipse ref={pupilL} cx={EYES[0].x} cy={EYES[0].y} rx="12.5" ry="11" fill="#050505" />
+              <ellipse ref={pupilR} cx={EYES[1].x} cy={EYES[1].y} rx="12.5" ry="11" fill="#050505" />
+            </svg>
           </div>
         </div>
+        {/* Only the drawing itself is clickable, not the empty square around it */}
+        <div
+          role="button"
+          aria-label="Aarchi"
+          onClick={isHome ? handleClick : onHome}
+          style={{
+            position: "absolute", left: "28%", top: "22%", width: "47.5%", height: "56%",
+            cursor: "pointer",
+            pointerEvents: navHidden || !HERO.showCharacter ? "none" : "auto",
+          }}
+        />
       </div>
 
-      {/* ── Left of the mascot — the rolling word, appears after the first scroll ── */}
+      {/* ── Left of the mascot — the rolling word ── */}
       <div
         ref={leftRef}
         aria-hidden="true"
@@ -620,7 +690,7 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         </div>
       </div>
 
-      {/* ── Right of the mascot — DESIGNER, fixed ── */}
+      {/* ── DESIGNER, fixed ── */}
       <div
         ref={textRef}
         aria-hidden="true"
@@ -637,6 +707,22 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         <div className="hero-text-bob">{HERO_RIGHT}</div>
       </div>
 
+      {/* ── The intro line, under the big words (beside the character on desktop, under it on a phone) ── */}
+      <p
+        ref={introRef}
+        className="font-sans font-light leading-snug text-ink/75"
+        style={{
+          position:      "fixed",
+          zIndex:        44,
+          opacity:       0,
+          margin:        0,
+          pointerEvents: "none",
+          willChange:    "transform, opacity",
+        }}
+      >
+        {INTRO}
+      </p>
+
       {/* ── Animation keyframes ── */}
       <style>{`
         .mascot-breathe {
@@ -650,6 +736,9 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
         }
         .hero-text-bob {
           animation: heroTextBob 3.6s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .mascot-breathe, .hero-text-bob { animation: none !important; }
         }
         @keyframes heroTextBob {
           0%,100% { transform: translateY(0px); }

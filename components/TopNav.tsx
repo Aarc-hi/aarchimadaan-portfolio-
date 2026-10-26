@@ -1,6 +1,7 @@
 import React from 'react';
 import { ViewState, NAV_ITEMS } from '../types';
 import { useNavVisibility } from './useNavVisibility';
+import { SoundToggle } from './SoundToggle';
 
 interface TopNavProps {
   currentView: ViewState;
@@ -18,7 +19,7 @@ export const TopNav: React.FC<TopNavProps> = ({ currentView, setView, forceHidde
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-40 pt-[34px] md:pt-[54px] pb-3 pl-[84px] pr-[6.25vh] flex justify-end gap-5 md:gap-16 font-sans text-sm transition-transform duration-300 ease-out ${
+      className={`pointer-events-none fixed top-0 left-0 w-full z-40 pt-[34px] md:pt-[54px] pb-3 pl-[84px] pr-[6.25vh] flex justify-end gap-5 md:gap-16 font-sans text-sm transition-transform duration-300 ease-out ${
         hidden ? '-translate-y-full' : 'translate-y-0'
       }`}
     >
@@ -28,7 +29,7 @@ export const TopNav: React.FC<TopNavProps> = ({ currentView, setView, forceHidde
         type="button"
         aria-label="Aarchi — home"
         onClick={() => { setView('HOME'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-        className="hidden md:block absolute top-[50px] h-[28px] cursor-pointer bg-ink hover:bg-cobalt transition-colors duration-300"
+        className="pointer-events-auto hidden md:block absolute top-[54px] h-[20px] cursor-pointer bg-ink hover:bg-cobalt transition-colors duration-300"
         style={{
           // --mascot-corner is set every frame by MascotHero: 0 while the mascot is elsewhere, 1 once it sits in the
           // corner. With no mascot in the corner the logotype takes the top-left; as the mascot arrives it is pushed right.
@@ -44,11 +45,12 @@ export const TopNav: React.FC<TopNavProps> = ({ currentView, setView, forceHidde
           maskPosition: 'left center',
         }}
       />
+      <SoundToggle />
       {NAV_ITEMS.map((item) => (
         <button
           key={item.id}
           onClick={() => setView(item.id)}
-          className={`cursor-pointer hover:text-cobalt ${activeId === item.id ? 'text-cobalt' : ''}`}
+          className={`pointer-events-auto cursor-pointer hover:text-cobalt ${activeId === item.id ? 'text-cobalt' : ''}`}
         >
           {item.label}
         </button>

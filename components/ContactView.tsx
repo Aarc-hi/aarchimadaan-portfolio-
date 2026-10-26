@@ -34,7 +34,7 @@ const rowHTML = (r: Row) => {
 };
 
 const CSS = `
-.cv-root { position: fixed; inset: 0; z-index: 30; pointer-events: none; color: #1A1A1A; font-family: 'Josefin Sans', sans-serif; font-weight: 375; }
+.cv-root { position: fixed; inset: 0; z-index: 30; pointer-events: none; color: #1A1A1A; font-family: 'Mallanna', sans-serif; font-weight: 400; }
 .cv-stage, .cv-corner { animation: cv-in .8s ease-out .5s both; }
 @keyframes cv-in { from { opacity: 0; } to { opacity: 1; } }
 

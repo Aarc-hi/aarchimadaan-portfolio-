@@ -5,8 +5,8 @@ import { ArrowUpRight } from 'lucide-react';
 const INTERACTIVE = 'a, button, summary, label, input, select, textarea, [role="button"], [role="link"], [tabindex]:not([tabindex="-1"]), .cursor-pointer';
 const CLICK_SCALE = 2; // the 10px dot becomes 20px over something clickable
 // Over anything marked data-cursor="view" the dot morphs into a pill (a rectangle with fully rounded ends) saying "View".
-const VIEW_W = 100; // the word (~36px) + gap + arrow (15px) is ~56px wide, so this leaves ~22px of blue either side
-const VIEW_H = 38;  // and ~13px above and below the capitals
+const VIEW_W = 70; // the word (~26px) + gap + arrow (11px) is ~41px wide, so this leaves ~14px of blue either side
+const VIEW_H = 28;  // and ~10px above and below the capitals
 const DOT = 10;
 const GROW_MS = 500;   // dot -> pill
 const SHRINK_MS = 380; // pill -> dot
@@ -120,9 +120,9 @@ export const CustomCursor: React.FC = () => {
         className="absolute left-1/2 top-1/2 rounded-full bg-cobalt flex items-center justify-center overflow-hidden"
         style={{ width: DOT, height: DOT, transform: 'translate(-50%, -50%) scale(1)', transition: 'transform 200ms ease-out, opacity 180ms ease', willChange: 'width, height' }}
       >
-        <span ref={labelRef} className="flex items-center gap-[5px] font-sans text-[15px] uppercase tracking-wide text-white opacity-0 select-none whitespace-nowrap">
+        <span ref={labelRef} className="flex items-center gap-[4px] font-sans text-[11px] uppercase tracking-wide text-white opacity-0 select-none whitespace-nowrap">
           View
-          <ArrowUpRight size={15} strokeWidth={2} className="shrink-0" />
+          <ArrowUpRight size={11} strokeWidth={2} className="shrink-0" />
         </span>
       </div>
     </div>

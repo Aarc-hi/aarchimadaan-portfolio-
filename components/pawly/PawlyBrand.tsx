@@ -71,7 +71,7 @@ export const FontsUsed: React.FC = () => (
           {/* where the font ranks and what it does, then its name, which sits on the baseline of the Aa */}
           <div className="min-w-0 text-ink md:flex md:items-end">
             <div className="min-w-0">
-              <p className="font-sans opacity-60 mb-[1.2em]" style={{ fontSize: '11px', lineHeight: 1.4 }}>{f.rank} · {f.role}</p>
+              <p className="font-sans mb-[1.2em]" style={{ fontSize: '11px', lineHeight: 1.4 }}>{f.rank} · {f.role}</p>
               <p className="break-words" style={{ ...SPEC[f.id].style, ...TRIM, fontSize: '30px', lineHeight: 1.1 }}>{f.name}</p>
             </div>
           </div>

@@ -3,8 +3,11 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ViewState, Project } from '../types';
 import { PROJECTS } from '../data';
+import { ThelaResearch, RESEARCH_NAV } from './research/ThelaResearch';
 import { PawlyCaseStudy, PAWLY_NAV } from './pawly/PawlyCaseStudy';
 import { Marked } from './Marked';
+import { FlipBook } from './FlipBook';
+import { ParkingGame } from './ParkingGame';
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -13,7 +16,7 @@ interface ProjectDetailViewProps {
 }
 
 export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, setView, setSelectedProject }) => {
-  const [activeTab, setActiveTab] = useState(project.tldr ? 'tldr' : project.id === 'p4' ? 'what' : 'overview');
+  const [activeTab, setActiveTab] = useState(project.tldr ? 'tldr' : project.id === 'p1' ? 'problem' : project.id === 'p4' ? 'what' : 'overview');
   const scrollRef = useRef<HTMLElement>(null);
 
   const mockups = project.mockups || [];
@@ -22,12 +25,14 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   const allImages = [...mockups, ...standardImages, ...pages];
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [carParked, setCarParked] = useState(false);   // the zine's parking page: has the car been parked in the right bay
   // Thela Thaila Thikana opens straight into its research, so it skips the Overview and Concept blurbs.
   // Pawly has its own set of sections (components/pawly), so it skips the generic ones too.
   const isPawly = project.id === 'p4';
-  const showIntro = !isPawly;
+  const showIntro = project.id !== 'p1' && !isPawly;
   // ...and shows its research question as the heading above its findings, with its team, role and date beside the title.
-  const questionInHeader = false; // (the Thela research layout is not part of this push)
+  const questionInHeader = project.id === 'p1' && !!project.researchQuestion;
+  const noProblem = project.id === 'p3'; // Sonic has no problem statement section
 
   const openLightbox = (index: number) => setLightboxIndex(index);
   const closeLightbox = () => setLightboxIndex(null);
@@ -81,7 +86,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
       }
     );
 
-    const sections = scrollContainer.querySelectorAll('section[id]');
+    const sections = scrollContainer.querySelectorAll('section[id], div[id^="ch-"]'); // the research chapters count too
     sections.forEach((section) => observer.observe(section));
 
     return () => observer.disconnect();
@@ -104,35 +109,58 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
     setView('PROJECTS');
   };
 
-  // Side nav: collapsed to a slim rail at the left edge, slides out when the cursor comes near.
-  const [navOpen, setNavOpen] = useState(false);
-  const navTimer = useRef<number | null>(null);
-  const openNav = () => {
-    if (navTimer.current) window.clearTimeout(navTimer.current);
-    setNavOpen(true);
-  };
-  const closeNav = () => {
-    if (navTimer.current) window.clearTimeout(navTimer.current);
-    navTimer.current = window.setTimeout(() => setNavOpen(false), 250);
-  };
-  useEffect(() => () => { if (navTimer.current) window.clearTimeout(navTimer.current); }, []);
-
-  const goTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    setNavOpen(false);
-  };
-
   // `sub` items are the research chapters, listed indented under "Findings".
   const tldrNav = project.tldr ? [{ id: 'tldr', label: 'tl;dr' }] : [];
   const navItems: { id: string; label: string; sub?: boolean }[] = isPawly ? [...tldrNav, ...PAWLY_NAV] : [
     ...tldrNav,
     ...(showIntro ? [{ id: 'overview', label: 'Overview' }, { id: 'concept', label: 'Concept' }] : []),
-    { id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' },
+    ...(noProblem || project.id === 'p1' ? [] : [{ id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' }]),
+    // on Thela the research question comes right after the market chapter, inside the findings
+    ...(project.id === 'p1' ? [{ id: 'findings', label: 'Findings' }, ...RESEARCH_NAV.flatMap((c) => c.id === 'ch-market' ? [{ ...c, sub: true }, { id: 'problem', label: 'Research', sub: true }] : [{ ...c, sub: true }])] : []),
     ...(project.youtubeId ? [{ id: 'prototype', label: 'Prototype' }] : []),
     ...(project.videoSrc ? [{ id: 'video', label: 'Video Walkthrough' }] : []),
-    ...(allImages.length > 0 ? [{ id: 'images', label: 'Visuals' }] : []),
-    { id: 'details', label: 'Tech Stack' },
+    ...(allImages.length > 0 || (project.book?.length ?? 0) > 1 ? [{ id: 'images', label: project.id === 'p1' ? 'Creative zine' : 'Visuals' }] : []),
   ];
+
+  // The progress line: how far down the project you are (0 to 1), and where each heading sits on it.
+  const [progress, setProgress] = useState(0);
+  const [marks, setMarks] = useState<Record<string, number>>({});
+  const [dragging, setDragging] = useState(false);
+  const [trackH, setTrackH] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const readProgress = () => {
+    const m = scrollRef.current; if (!m) return;
+    setProgress(Math.min(1, Math.max(0, m.scrollTop / Math.max(1, m.scrollHeight - m.clientHeight))));
+  };
+  const seekTo = (clientY: number) => {
+    const t = trackRef.current, m = scrollRef.current; if (!t || !m) return;
+    const r = t.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (clientY - r.top) / r.height));
+    m.scrollTop = f * Math.max(0, m.scrollHeight - m.clientHeight);
+  };
+  useEffect(() => {
+    const m = scrollRef.current; if (!m) return;
+    const measure = () => {
+      const max = Math.max(1, m.scrollHeight - m.clientHeight);
+      const top = m.getBoundingClientRect().top;
+      const next: Record<string, number> = {};
+      navItems.forEach((n) => {
+        const el = document.getElementById(n.id);
+        if (el) next[n.id] = Math.min(1, Math.max(0, (el.getBoundingClientRect().top - top + m.scrollTop - 24) / max));
+      });
+      setMarks(next);
+      setTrackH(trackRef.current ? trackRef.current.clientHeight : 0);
+      readProgress();
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (m.firstElementChild) ro.observe(m.firstElementChild);
+    window.addEventListener('resize', measure);
+    const t = window.setTimeout(measure, 600); // once the images have had a moment to load
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); window.clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
 
   return (
     <motion.div
@@ -143,34 +171,68 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
       style={{ display: 'flex', justifyContent: 'center' }}
     >
       <div className="w-full px-3 md:px-5 flex flex-col md:flex-row" style={{ height: '100%', overflow: 'hidden' }}>
-        {/* LEFT rail — a slim set of ticks at the edge; the full nav slides out when the cursor comes near */}
+        {/* Back, in the top-left corner on wide screens (phones have their own Back button below) */}
+        <button onClick={handleClose} className="hidden md:inline-flex items-center gap-2 absolute left-5 top-24 z-30 font-bold text-lg cursor-pointer hover:text-cobalt transition-colors group">
+          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Back
+        </button>
+        {/* LEFT rail: the progress line (no menu opens from it) */}
         <div
-          className="hidden md:block absolute left-0 top-24 bottom-8 z-20"
-          style={{ width: navOpen ? '190px' : '36px' }}
-          onMouseEnter={openNav}
-          onMouseLeave={closeNav}
-          onFocusCapture={openNav}
-          onBlurCapture={closeNav}
+          className="hidden md:block absolute left-0 top-44 bottom-28 z-20"
+          style={{ width: '36px' }}
         >
-          <button type="button" aria-label="Show project navigation" onClick={() => setNavOpen((o) => !o)}
-            className="absolute left-0 top-0 bottom-0 w-9 flex flex-col items-start justify-center gap-4 pl-3 cursor-pointer">
-            {navItems.map((n) => (
-              <span key={n.id} className={`block h-0.5 rounded-full transition-all duration-300 ${activeTab === n.id ? 'w-5 bg-cobalt' : 'w-3 bg-black/25'}`} />
+          {/* A straight gray line that fills with blue as you scroll. Each heading has a dot on it, blue once you have reached it.
+              The blue knob is a slider: drag it (or click the line) to move through the project. */}
+          <div
+            ref={trackRef}
+            role="slider"
+            tabIndex={0}
+            aria-label="Position in the project"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress * 100)}
+            className="group absolute left-0 top-0 bottom-0 w-9 z-10 cursor-pointer touch-none select-none outline-none"
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); setDragging(true); seekTo(e.clientY); }}
+            onPointerMove={(e) => {
+              if (!dragging) return;
+              if (e.buttons === 0) { setDragging(false); return; } // the button was let go somewhere we did not see
+              seekTo(e.clientY);
+            }}
+            onPointerUp={() => setDragging(false)}
+            onPointerCancel={() => setDragging(false)}
+            onLostPointerCapture={() => { setDragging(false); }}
+            onKeyDown={(e) => {
+              const m = scrollRef.current; if (!m) return;
+              const step = e.shiftKey ? m.clientHeight * 0.8 : 80;
+              if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { m.scrollBy({ top: step }); e.preventDefault(); }
+              if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { m.scrollBy({ top: -step }); e.preventDefault(); }
+              if (e.key === 'Home') { m.scrollTo({ top: 0 }); e.preventDefault(); }
+              if (e.key === 'End') { m.scrollTo({ top: m.scrollHeight }); e.preventDefault(); }
+            }}
+          >
+            <span aria-hidden="true" className="absolute left-[17px] top-0 bottom-0 w-[2px] rounded-full bg-black/15" />
+            <span aria-hidden="true" className="absolute left-[17px] top-0 w-[2px] rounded-full bg-cobalt" style={{ height: `${progress * 100}%` }} />
+            {navItems.map((n) => marks[n.id] === undefined ? null : (
+              <span key={n.id} aria-hidden="true" title={n.label}
+                className={`absolute left-[14px] w-2 h-2 -translate-y-1/2 rounded-full border-2 border-paper transition-colors duration-200 ${progress >= marks[n.id] - 0.002 ? 'bg-cobalt' : 'bg-black/25'}`}
+                style={{ top: `${marks[n.id] * 100}%` }} />
             ))}
-          </button>
+            {/* the heading names, beside their dots: they only show while the cursor is on the line (or while dragging) */}
+            {(() => {
+              let last = -Infinity;
+              return navItems.filter((n) => marks[n.id] !== undefined).sort((a, b) => marks[a.id] - marks[b.id]).map((n) => {
+                const y = Math.max(marks[n.id] * trackH, last + 22); last = y;
+                return (
+                  <span key={`l-${n.id}`} aria-hidden="true"
+                    className={`pointer-events-none absolute left-[34px] -translate-y-1/2 whitespace-nowrap px-2 py-0.5 font-sans text-[11px] tracking-wide transition-opacity duration-200 ${dragging || activeTab === n.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${activeTab === n.id ? 'text-cobalt' : 'text-ink/60'}`}
+                    style={{ top: `${y}px` }}>{n.label}</span>
+                );
+              });
+            })()}
+            <span aria-hidden="true"
+              className={`absolute left-[11px] w-[16px] h-[16px] -translate-y-1/2 rounded-full bg-cobalt border-2 border-paper shadow-[0_2px_8px_rgba(42,82,190,0.45)] ${dragging ? 'scale-125' : 'scale-100'} transition-transform duration-150`}
+              style={{ top: `${progress * 100}%` }} />
+          </div>
 
-          <aside className={`absolute left-0 top-0 bottom-0 w-[184px] bg-paper border-r-2 border-black/10 shadow-[8px_0_24px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${navOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'}`}>
-            <div className="flex flex-col gap-3 font-sans text-[11px] tracking-wide pl-3 pr-3 py-10 h-full overflow-y-auto no-scrollbar">
-              <button onClick={handleClose} className="hover:text-cobalt text-left mb-10 flex items-center gap-2 font-black cursor-pointer transition-colors text-ink group">
-                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform shrink-0" />
-                <span className="font-black">Back to Works</span>
-              </button>
-              {navItems.map((n) => (
-                <a key={n.id} href={`#${n.id}`} onClick={(e) => { e.preventDefault(); goTo(n.id); }}
-                  className={`border-l-2 py-2 transition-all duration-300 ease-out ${n.sub ? 'pl-7 -mt-2 py-1.5 text-[11px]' : 'pl-4'} ${activeTab === n.id ? 'border-cobalt text-cobalt bg-cobalt/5' : 'border-transparent text-ink/70 hover:border-black/50'}`}>{n.label}</a>
-              ))}
-            </div>
-          </aside>
         </div>
 
         {/* Mobile Back Button */}
@@ -184,9 +246,10 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
         <main
           ref={scrollRef}
           onScroll={(e) => {
+            readProgress();
             const target = e.target as HTMLElement;
             if (Math.abs(target.scrollHeight - target.scrollTop - target.clientHeight) < 20) {
-              setActiveTab(isPawly ? PAWLY_NAV[PAWLY_NAV.length - 1].id : 'details');
+              setActiveTab(navItems[navItems.length - 1].id);
             }
           }}
           className="no-scrollbar px-3 pt-4 pb-10 md:pt-8 md:pl-14 md:pr-14"
@@ -208,9 +271,9 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             {/* Thela Thaila Thikana lists its team, role and date as plain lines, pushed to the right margin along the title's bottom edge */}
             {questionInHeader && (
               <div className="flex flex-col gap-4 font-sans text-lg text-left md:pb-2">
-                <div><p className="text-[11px] tracking-wide opacity-60 mb-0.5">Group</p><p>6 people</p></div>
-                <div><p className="text-[11px] tracking-wide opacity-60 mb-0.5">My role</p><p>Research and creatives</p></div>
-                <div><p className="text-[11px] tracking-wide opacity-60 mb-0.5">Date</p><p>March 2025</p></div>
+                <div><p className="text-[11px] leading-none tracking-wide mb-1">Group</p><p className="leading-snug">6 people</p></div>
+                <div><p className="text-[11px] leading-none tracking-wide mb-1">My role</p><p className="leading-snug">Research and creatives</p></div>
+                <div><p className="text-[11px] leading-none tracking-wide mb-1">Date</p><p className="leading-snug">March 2025</p></div>
               </div>
             )}
           </div>
@@ -220,19 +283,19 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             <section id="tldr" className={project.tldrImage ? 'scroll-mt-32 mb-24 sm:-mt-16' : 'scroll-mt-32 mb-24 md:mb-32'}>
               <div className={project.tldrImage ? 'grid gap-10 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-2 lg:gap-16 items-end' : ''}>
                 <div className="sm:-mb-2">
-                  <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">tl;dr</h2>
-                  <p className="font-sans text-lg leading-relaxed max-w-2xl"><Marked text={project.tldr} /></p>
+                  <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">tl;dr</h2>
+                  <p className="font-sans text-lg leading-relaxed"><Marked text={project.tldr} /></p>
                 </div>
                 {/* the full orange cat: the front panel of the pack, on the right of the tl;dr */}
-                {project.tldrImage && <img src={project.tldrImage} alt={`${project.title}, the front of the pack`} className="block justify-self-center sm:-mt-[110px]" style={{ width: 'min(100%, 325px, calc(62vh * 0.7738))', height: 'auto' }} />}
+                {project.tldrImage && <img src={project.tldrImage} alt={`${project.title}, the front of the pack`} className="block justify-self-center sm:-mt-[110px]" style={{ width: 'min(100%, 293px, calc(62vh * 0.6971))', height: 'auto' }} />}
               </div>
             </section>
           )}
 
           {showIntro && (<>
           <section id="overview" className="scroll-mt-32 mb-32">
-            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Overview</h2>
-            <div className="text-lg font-sans max-w-3xl leading-relaxed space-y-6">
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Overview</h2>
+            <div className="text-lg font-sans leading-relaxed space-y-6">
               {project.description.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
@@ -240,8 +303,8 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           </section>
 
           <section id="concept" className="scroll-mt-32 mb-32">
-            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Concept</h2>
-            <div className="text-lg font-sans max-w-3xl leading-relaxed space-y-6">
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Concept</h2>
+            <div className="text-lg font-sans leading-relaxed space-y-6">
               <p>{project.concept || "Design conceptualization focusing on user experience and visual narrative."}</p>
             </div>
           </section>
@@ -250,20 +313,34 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
           {isPawly && <PawlyCaseStudy />}
 
-          {!questionInHeader && !isPawly && (
+          {!questionInHeader && !isPawly && !noProblem && (
           <section id="problem" className="scroll-mt-32 mb-32">
-            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">
+            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">
               {project.researchQuestion ? 'Research Question' : 'Problem Statement'}
             </h2>
-            <div className="text-lg font-sans max-w-3xl leading-relaxed space-y-6">
+            <div className="text-lg font-sans leading-relaxed space-y-6">
               <p>{project.researchQuestion || project.problemStatement || "Project challenge and user pain points analysis."}</p>
             </div>
           </section>
           )}
 
+          {project.id === 'p1' && (
+            <section id="findings" className="scroll-mt-32 mb-32">
+              {/* the research question sits between the market chapter and "What people told us" */}
+              {/* styled exactly like a research chapter (see Chapter in research/shared.tsx), so they read as one */}
+              <ThelaResearch afterMarket={
+                <section id="problem" className="scroll-mt-8 mb-28 md:mb-36">
+                  <h2 className="font-display font-normal text-lg tracking-wide leading-[1.1] mb-4 pb-3 border-b border-cobalt/25 text-cobalt">Research Question</h2>
+                  {/* the main thing of the research, so it is set much larger than the body text */}
+                  <p className="font-sans w-full text-[26px] md:text-[40px] tracking-tight leading-[1.25]">{project.researchQuestion}</p>
+                </section>
+              } />
+            </section>
+          )}
+
           {project.youtubeId && (
             <section id="prototype" className="scroll-mt-32 mb-32">
-              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Prototype</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Prototype</h2>
               <div className="w-full aspect-video border-2 border-black/20 overflow-hidden bg-black shadow-hard">
                 <iframe
                   width="100%"
@@ -281,7 +358,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
           {project.videoSrc && (
             <section id="video" className="scroll-mt-32 mb-32">
-              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Video Walkthrough</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Video Walkthrough</h2>
               <div className="w-full aspect-video border-2 border-black/20 overflow-hidden bg-black shadow-hard">
                 <video
                   controls
@@ -295,9 +372,14 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             </section>
           )}
 
-          {!isPawly && (standardImages.length > 0 || mockups.length > 0 || pages.length > 0) && (
+          {!isPawly && (standardImages.length > 0 || mockups.length > 0 || pages.length > 0 || (project.book?.length ?? 0) > 1) && (
             <section id="images" className="scroll-mt-32 mb-32">
-              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Visuals</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">{project.id === 'p1' ? 'Creative zine' : 'Visuals'}</h2>
+              {project.id === 'p1' && (
+                <p className="font-sans text-lg leading-relaxed mb-12">
+                  The research, retold as a zine that gives the reader a quick feel for the market. It is a multisensory zine, bringing in sound, touch and smell, and it shows how the market works and how its stakeholders come together to shape everyday life there.
+                </p>
+              )}
               <div className="flex flex-col gap-12">
                 {/* Large Mockups */}
                 {mockups.length > 0 && (
@@ -342,7 +424,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
                 {/* Small Pages Grid */}
                 {pages.length > 0 && (
-                  <div className="bg-[#cdcdcd] p-6 md:p-12 w-full mt-8 rounded-lg">
+                  <div className="w-full mt-8">
                     <div className={`grid gap-4 md:gap-8 items-center ${pages.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-4'}`}>
                       {pages.map((imgSrc, i) => {
                         const globalIndex = mockups.length + standardImages.length + i;
@@ -352,7 +434,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
                             onClick={() => openLightbox(globalIndex)}
                             className={`flex items-center justify-center transition-transform hover:scale-[1.02] duration-300 cursor-pointer ${pages.length === 1 ? 'w-full' : 'col-span-1'}`}
                           >
-                            <img src={encodeURI(imgSrc)} alt={`${project.title} page ${i + 1}`} className="w-full h-auto object-contain" />
+                            <img src={encodeURI(imgSrc)} alt={`${project.title} page ${i + 1}`} className="w-full h-auto object-contain" style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.28))' }} />
                           </div>
                         );
                       })}
@@ -360,8 +442,13 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
                   </div>
                 )}
 
+                {/* The whole magazine, flipped by clicking */}
+                {project.book && project.book.length > 1 && <FlipBook faces={project.book.map((s) => encodeURI(s))} alt={`${project.title} ${project.category.toLowerCase().includes('zine') ? 'zine' : 'magazine'}`}
+                  spreadOverlays={project.id === 'p1' ? { 5: <ParkingGame parked={carParked} onParked={setCarParked} /> } : undefined}
+                  spreadAudio={project.id === 'p1' ? { 2: encodeURI('/Municipal market/audio/market-sound.mp3') } : undefined} />}
+
                 {/* Placeholder Fallback */}
-                {!(project.images?.length) && !(project.mockups?.length) && !(project.pages?.length) && (
+                {!(project.images?.length) && !(project.mockups?.length) && !(project.pages?.length) && !(project.book?.length) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
                     {[1, 2, 3, 4].map((i) => (
                       <div key={i} className="aspect-video border-2 border-black/20 bg-paper-dark/5 flex items-center justify-center p-4">
@@ -374,31 +461,18 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             </section>
           )}
 
-          {!isPawly && (
-          <section id="details" className="scroll-mt-40 mb-24">
-            <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-black/15 text-ink/50">Tech Stack</h2>
-            <div className="flex flex-wrap gap-4">
-              {project.tech.map((t, idx) => (
-                <span key={idx} className="border-2 border-current bg-paper px-6 py-3 font-sans font-bold text-lg hover:bg-ink hover:text-paper transition-colors shadow-hard">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </section>
-          )}
-
           {/* Navigation Buttons */}
-          <div className="mt-16 pt-8 border-t-2 border-current flex flex-col md:flex-row justify-between gap-6">
+          <div className="mt-16 pt-8 border-t border-black/15 flex flex-col md:flex-row justify-between gap-6">
             <button
               onClick={handlePrev}
-              className="group flex flex-col items-start gap-2 border-2 border-current bg-transparent px-6 py-4 shadow-hard hover:shadow-none hover:bg-cobalt hover:text-white hover:border-cobalt transition-all duration-200"
+              className="group flex flex-col items-start gap-2 bg-transparent py-2 cursor-pointer hover:text-cobalt transition-colors duration-200"
             >
               <span className="font-sans text-[11px] opacity-70">← Previous</span>
               <span className="font-display font-normal text-3xl tracking-tight w-full text-left truncate">{prevProject.title}</span>
             </button>
             <button
               onClick={handleNext}
-              className="group flex flex-col items-end gap-2 border-2 border-current bg-transparent px-6 py-4 shadow-hard hover:shadow-none hover:bg-cobalt hover:text-white hover:border-cobalt transition-all duration-200 text-right"
+              className="group flex flex-col items-end gap-2 bg-transparent py-2 cursor-pointer hover:text-cobalt transition-colors duration-200 text-right"
             >
               <span className="font-sans text-[11px] opacity-70">Next →</span>
               <span className="font-display font-normal text-3xl tracking-tight w-full text-right truncate">{nextProject.title}</span>
