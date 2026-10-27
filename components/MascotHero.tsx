@@ -738,7 +738,7 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
           animation: mascotKnockout 0.75s ease-in-out infinite !important;
         }
         .hero-text-bob {
-          animation: heroTextBob 3.6s ease-in-out infinite;
+          animation: none; /* the big words stay still (they used to float up and down with the mascot) */
         }
         @media (prefers-reduced-motion: reduce) {
           .mascot-breathe, .hero-text-bob { animation: none !important; }
