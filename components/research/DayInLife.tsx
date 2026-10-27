@@ -155,7 +155,7 @@ export const DayInLife: React.FC = () => {
 
   return (
     <Chapter id="ch-day" n="05" kicker="A day in the life" title="A day in a life"
-      intro="Valiben runs a roadside toy stall. Scroll through her day and watch the clock move. Eight hours go to home and family, and eight to the stall.">
+      intro="Valiben runs a **roadside toy stall**. Scroll through her day and watch the clock move. **Eight hours** go to home and family, and **eight to the stall**.">
       <div ref={gridRef} className="grid lg:grid-cols-[340px_1fr] gap-6 lg:gap-10 items-start" style={{ '--day-h': `${viewH}px`, '--day-top': `${-padTop}px` } as React.CSSProperties}>
         {/* On wide screens the dial's card stays in the middle of the screen while the hours go by on the right. It sits in a column
             as tall as the screen that is pinned to the top, with the card centred in it: so it starts below the chapter's intro (where the

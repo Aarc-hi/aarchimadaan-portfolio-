@@ -21,7 +21,7 @@ export const TopNav: React.FC<TopNavProps> = ({ currentView, setView, forceHidde
     <nav
       className={`pointer-events-none fixed top-0 left-0 w-full z-40 pt-[34px] md:pt-[54px] pb-3 pl-[84px] pr-[6.25vh] flex justify-end gap-5 md:gap-14 font-sans text-[13px] transition-transform duration-300 ease-out ${
         hidden ? '-translate-y-full' : 'translate-y-0'
-      }`}
+      } ${currentView === 'project-detail' ? 'bg-gradient-to-b from-paper via-paper/90 to-transparent' : ''}`}
     >
       {/* The "aarchi" logotype, just after the mascot in the top-left (the mascot's art ends about 112px in).
           Drawn as a mask so it takes the ink colour, and cobalt on hover. Hidden on phones, where the links need the room. */}

@@ -8,7 +8,7 @@ export const InsightsSection: React.FC = () => {
 
   return (
     <Chapter id="ch-insights" n="08" kicker="Insights" title="Insights"
-      intro="Three things the research kept pointing to. Hover an insight and the collected information behind it lights up in the chapters above. Pin it to keep it lit, or press “See it” to jump straight to a piece of it.">
+      intro="**Three things** the research kept pointing to. Hover an insight and the collected information behind it lights up in the chapters above. Pin it to keep it lit, or press “See it” to jump straight to a piece of it.">
       {pinned !== null && (
         <div className="flex items-center justify-between gap-4 mb-4 px-5 py-3 rounded-xl bg-cobalt text-white font-sans text-lg">
           <span>Showing the collected information for insight {pinned} across the page.</span>

@@ -34,7 +34,7 @@ export const StakeholderMap: React.FC = () => {
 
   return (
     <Chapter id="ch-stakeholders" n="04" kicker="Stakeholder mapping" title="Stakeholder"
-      intro="Every stakeholder placed by how much power they hold and how interested they are. Hover one to read its box.">
+      intro="Every stakeholder placed by **how much power they hold** and **how interested they are**. Hover one to read its box.">
       <div>
         {/* No card and no width limit: the map takes the whole width of the page (less the room the POWER label needs on the left). */}
         <div>

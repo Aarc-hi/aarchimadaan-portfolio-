@@ -38,7 +38,7 @@ export const Shadowing: React.FC = () => {
 
   return (
     <Chapter id="ch-shadowing" n="06" kicker="Shadowing" title="Shadowing"
-      intro="Life at Ahmedabad’s Municipal Market, from the pavement of C.G. Road. Move along the evening, one moment at a time.">
+      intro="Life at **Ahmedabad’s Municipal Market**, from the pavement of C.G. Road. Move along the evening, one moment at a time.">
       <div
         className={`transition-all duration-300 ${glow ? glowClass : ''}`}>
         {/* the evening, 4 PM onwards: the slider */}

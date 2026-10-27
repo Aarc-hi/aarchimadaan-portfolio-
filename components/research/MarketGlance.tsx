@@ -96,7 +96,7 @@ export const MarketGlance: React.FC = () => {
 
   return (
     <Chapter id="ch-market" n="01" kicker="Context" title="The market at a glance"
-      intro="Municipal Market, known as “MM” or Munshi’s Bazar, has been part of Ahmedabad’s commercial and social life for decades. Hover the plan to see its shops, stalls and courtyard.">
+      intro="Municipal Market, known as “MM” or Munshi’s Bazar, has been part of Ahmedabad’s **commercial and social life** for decades. Hover the plan to see its shops, stalls and courtyard.">
       <div ref={ref} className="grid lg:grid-cols-[0.8fr_1.2fr] gap-6 lg:gap-10 items-start">
         <div className="flex flex-col gap-7 lg:self-center">
           {/* The facts are plain, still text (no boxes): nothing opens or moves when the mouse is over them. Each one shows its note. */}

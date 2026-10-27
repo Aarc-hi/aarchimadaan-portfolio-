@@ -36,7 +36,7 @@ export const CardSorting: React.FC = () => {
 
   return (
     <Chapter id="ch-sorting" n="07" kicker="Card sorting" title="Card sorting"
-      intro="Five vendors put five problems in order of importance. Hover a problem to follow it across everyone, or click a vendor to follow their column. Rank 1 is the most important.">
+      intro="**Five vendors** put **five problems** in order of importance. Hover a problem to follow it across everyone, or click a vendor to follow their column. **Rank 1** is the most important.">
       <div className="overflow-x-auto" ref={table.ref}>
         <div className="min-w-[560px]">
           <div className="grid grid-cols-[minmax(130px,1.5fr)_repeat(5,minmax(0,1fr))_minmax(86px,1fr)] items-end gap-2 pb-3" style={rise(table.seen, 0)}>

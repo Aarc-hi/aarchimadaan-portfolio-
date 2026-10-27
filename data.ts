@@ -68,10 +68,10 @@ export const PROJECTS: Project[] = [
     year: '2025',
     category: 'UX Research & Zine',
     description: [
-      'This project explores the everyday ecosystem of a municipal market, focusing on the interactions between vendors, visitors, and workers.',
-      'Through extensive UX research methods, the study examines how these stakeholders cooperate, conflict, and adapt within a shared space.'
+      'This project explores the **everyday ecosystem of a municipal market**, focusing on the interactions between **vendors, visitors, and workers**.',
+      'Through extensive UX research methods, the study examines how these stakeholders **cooperate, conflict, and adapt** within a shared space.'
     ],
-    concept: 'The project translates research insights into a multisensory storytelling format, moving beyond traditional reports. The zine uses narrative, visuals, and interactive elements along with sensory cues like smell and audio to represent the emotional and social layers of the market. By focusing on lived experiences rather than just data, the concept allows readers to understand the system intuitively, highlighting both visible interactions and underlying tensions.',
+    concept: 'The project translates research insights into a **multisensory storytelling format**, moving beyond traditional reports. The zine uses narrative, visuals, and interactive elements along with sensory cues like smell and audio to represent the emotional and social layers of the market. By focusing on **lived experiences** rather than just data, the concept allows readers to understand the system intuitively, highlighting both visible interactions and underlying tensions.',
     researchQuestion: 'What drives cooperation and conflict among stakeholders in Municipal Market, and how does it shape their openness or resistance to change?',
     tldr: 'A UX research study of a municipal market, told as a **multisensory zine** that lets readers feel how vendors, visitors and workers cooperate, clash and adapt. It asks what drives **cooperation and conflict** among stakeholders and how that shapes their openness or resistance to change.',
     tech: ['UX Research', 'Ethnography', 'Visual Storytelling', 'Zine Design'],
@@ -91,15 +91,15 @@ export const PROJECTS: Project[] = [
     year: '2025',
     category: 'Product Design',
     description: [
-      'Alignr is a wearable posture corrector designed for students and desk workers who spend long hours sitting.',
-      'The device helps users become aware of poor posture habits by detecting slouching and gently alerting them after a few seconds.'
+      'Alignr is a **wearable posture corrector** designed for students and desk workers who spend long hours sitting.',
+      'The device helps users become aware of poor posture habits by **detecting slouching** and gently alerting them after a few seconds.'
     ],
-    concept: 'The device is designed as a compact, lightweight wearable that easily attaches to clothing. It focuses on subtle intervention rather than constant correction, encouraging users to build awareness over time without disrupting their workflow.',
-    problemStatement: 'How might we create a small, wearable device to make users notice and adjust for poor posture in real time without disruption?',
+    concept: 'The device is designed as a compact, lightweight wearable that easily attaches to clothing. It focuses on **subtle intervention** rather than constant correction, encouraging users to build awareness over time without disrupting their workflow.',
+    problemStatement: 'How might we create a **small, wearable device** to make users **notice and adjust for poor posture** in real time without disruption?',
     tldr: 'A small wearable that **spots slouching** and gently nudges students and desk workers to fix their posture. It alerts you after a few seconds of slouching, with **subtle nudges** instead of constant correction, so awareness builds over time without breaking your flow.',
     tech: ['Arduino', 'C++', 'Sensors', 'Product Prototyping'],
     coverImage: '/ALIGNR/alignr-poster.jpg',
-    images: ['/ALIGNR/alignr-poster.jpg', '/Sit right/WhatsApp Image 2026-04-28 at 11.14.04 AM.jpeg', '/Sit right/WhatsApp Image 2026-04-28 at 11.14.08 AM.jpeg'],
+    images: ['/ALIGNR/alignr-poster.jpg'],   // the two renders that used to follow it now live in the page's Explorations
     youtubeId: '-rb_0nzve3Y'
   },
   {
@@ -109,11 +109,11 @@ export const PROJECTS: Project[] = [
     year: '2025',
     category: 'Editorial Design',
     description: [
-      'Sonic is a magazine designed to explore music genres, their subgenres, influential artists, and iconic instruments.',
-      'Each spread visually reflects the energy of its genre through typography, scale shifts, alignment play, and structured negative space.'
+      'Sonic is a magazine designed to explore **music genres**, their subgenres, influential artists, and iconic instruments.',
+      'Each spread visually reflects the energy of its genre through **typography, scale shifts, alignment play, and structured negative space**.'
     ],
-    concept: 'Sonic translates musical rhythm and genre identity into a strong visual language through typography and structured layouts. As an exclusive editorial space, it brings together a community of music enthusiasts.',
-    problemStatement: 'How might we design a music magazine that effectively represents multiple genres while maintaining a clear, engaging, and navigable visual system?',
+    concept: 'Sonic translates **musical rhythm and genre identity** into a strong visual language through typography and structured layouts. As an exclusive editorial space, it brings together a **community of music enthusiasts**.',
+    problemStatement: 'How might we design a music magazine that effectively represents **multiple genres** while maintaining a **clear, engaging, and navigable visual system**?',
     tldr: 'A magazine about **music genres**, where each spread takes on the energy of its genre through **typography** and layout. It covers subgenres, influential artists and iconic instruments, held together by scale shifts, alignment play and structured negative space.',
     tech: ['InDesign', 'Photoshop', 'Typography', 'Grid Systems'],
     coverImage: '/Sonic magazine visual stock/FIRST IMAGE LARGE.png', // the home cover, no longer shown on the project page
@@ -133,11 +133,11 @@ export const PROJECTS: Project[] = [
     year: '2026',
     category: 'Packaging Design',
     description: [
-      'Pawly is a packaging design project for dry salmon-based cat food, created to make pet nutrition feel approachable and engaging for owners.',
-      'The packaging aims to stand out in a saturated pet food market by combining functionality with a distinct visual identity.'
+      'Pawly is a packaging design project for **dry salmon-based cat food**, created to make pet nutrition feel **approachable and engaging** for owners.',
+      'The packaging aims to stand out in a saturated pet food market by combining **functionality with a distinct visual identity**.'
     ],
-    concept: 'The concept draws inspiration from orange cats, known for their playful and expressive personalities. This idea is translated into the packaging through warm tones, character-driven visuals, and a lively composition.',
-    problemStatement: 'How might we design cat food packaging that stands out visually on shelves while also improving usability and maintaining product freshness for everyday use?',
+    concept: 'The concept draws inspiration from **orange cats**, known for their playful and expressive personalities. This idea is translated into the packaging through warm tones, character-driven visuals, and a lively composition.',
+    problemStatement: 'How might we design cat food packaging that **stands out visually on shelves** while also improving **usability** and maintaining **product freshness** for everyday use?',
     tldrImage: '/PAWLY/pawly/cat-shout.png',
     tldr: 'Packaging for a **dry salmon-based cat food**, inspired by **orange cats** to feel approachable and engaging. Warm tones, character-driven visuals and a lively composition help it stand out in a saturated pet food market while staying practical for everyday use.',
     tech: ['Illustrator', 'Packaging Design', 'Branding', 'Visual Identity'],
@@ -153,11 +153,11 @@ export const PROJECTS: Project[] = [
     year: '2025',
     category: '3D World Building / VR',
     description: [
-      'The Pen Hospital is a virtual reality experience inspired by a real pen repair shop in Thrissur. Set during the 1960s Land Reform period, it explores how everyday objects—like pens used to sign land contracts, can carry historical and emotional significance.',
+      'The Pen Hospital is a **virtual reality experience** inspired by a **real pen repair shop in Thrissur**. Set during the 1960s Land Reform period, it explores how everyday objects—like pens used to sign land contracts, can carry **historical and emotional significance**.',
       'Users enter a hospital-like environment where they interact with and repair these pens, engaging with both the space and its context.'
     ],
-    concept: 'The project reimagines broken pens as patients, turning repair into an act of care rather than utility. Through this metaphor, the interaction reflects ideas of creativity, labor, and the lasting impact of decisions tied to these objects. The experience uses simple actions to create a more reflective and meaningful engagement.',
-    problemStatement: 'How might we use virtual reality to transform everyday objects into meaningful interactive experiences that communicate deeper historical and emotional narratives?',
+    concept: 'The project reimagines **broken pens as patients**, turning repair into an **act of care** rather than utility. Through this metaphor, the interaction reflects ideas of creativity, labor, and the lasting impact of decisions tied to these objects. The experience uses simple actions to create a more reflective and meaningful engagement.',
+    problemStatement: 'How might we use **virtual reality** to transform everyday objects into **meaningful interactive experiences** that communicate deeper **historical and emotional narratives**?',
     tldr: 'A VR experience based on a **real pen repair shop in Thrissur**, where repairing broken pens becomes an **act of care**. Set in the 1960s Land Reform period, it turns the pens once used to sign land contracts into patients, so simple actions carry history and emotion.',
     tech: ['Unity', 'Blender'],
     coverImage: '/3d world building/Screenshot 2026-04-30 180238ev.png',

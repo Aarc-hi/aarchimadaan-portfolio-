@@ -7,6 +7,7 @@ const TURN_MS = 800;
 const EASE = 'cubic-bezier(0.645, 0.045, 0.355, 1)';
 const PAGE_SHADOW = '0 28px 44px -14px rgba(0,0,0,0.32), 0 10px 18px -8px rgba(0,0,0,0.18)';
 
+const SOUND_LEVEL = 0.35; // how loud the spread's sound gets (0–1)
 const SOUND_IN_MS = 900;
 const SOUND_OUT_MS = 1800;
 
@@ -31,13 +32,12 @@ export const FlipBook: React.FC<{ faces: string[]; alt: string; pageRatio?: numb
       if (k >= 1) { window.clearInterval(fade.current!); fade.current = null; done?.(); }
     }, 40);
   };
-  const sound = spreadAudio?.[turned];
-  useEffect(() => {
+  const sound = spreadAudio?.[turned];  useEffect(() => {
     if (sound && !muted) {
       if (!audio.current) { audio.current = new Audio(); audio.current.loop = true; }
       const a = audio.current;
       if (!a.src.endsWith(sound)) { a.src = sound; a.volume = 0; }
-      a.play().then(() => fadeTo(a, 1, SOUND_IN_MS)).catch(() => {});
+      a.play().then(() => fadeTo(a, SOUND_LEVEL, SOUND_IN_MS)).catch(() => {});
     } else if (audio.current) {
       const a = audio.current;
       fadeTo(a, 0, SOUND_OUT_MS, () => { a.pause(); a.currentTime = 0; });

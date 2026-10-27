@@ -8,7 +8,9 @@ import { PawlyCaseStudy, PAWLY_NAV } from './pawly/PawlyCaseStudy';
 import { Marked } from './Marked';
 import { FlipBook } from './FlipBook';
 import { ParkingGame } from './ParkingGame';
-
+import { SoundHint } from './SoundHint';
+import { AlignrCaseStudy, ALIGNR_NAV } from './alignr/AlignrCaseStudy';
+import { SlouchFigure } from './alignr/SlouchFigure';
 interface ProjectDetailViewProps {
   project: Project;
   setView: (view: ViewState) => void;
@@ -29,7 +31,8 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   // Thela Thaila Thikana opens straight into its research, so it skips the Overview and Concept blurbs.
   // Pawly has its own set of sections (components/pawly), so it skips the generic ones too.
   const isPawly = project.id === 'p4';
-  const showIntro = project.id !== 'p1' && !isPawly;
+  const isAlignr = project.id === 'p2';   // Alignr has its own sections too (components/alignr), with a figure to play with beside the title
+  const showIntro = project.id !== 'p1' && !isPawly && !isAlignr;
   // ...and shows its research question as the heading above its findings, with its team, role and date beside the title.
   const questionInHeader = project.id === 'p1' && !!project.researchQuestion;
   const noProblem = project.id === 'p3'; // Sonic has no problem statement section
@@ -113,13 +116,14 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   const tldrNav = project.tldr ? [{ id: 'tldr', label: 'tl;dr' }] : [];
   const navItems: { id: string; label: string; sub?: boolean }[] = isPawly ? [...tldrNav, ...PAWLY_NAV] : [
     ...tldrNav,
+    ...(isAlignr ? ALIGNR_NAV : []),
     ...(showIntro ? [{ id: 'overview', label: 'Overview' }, { id: 'concept', label: 'Concept' }] : []),
-    ...(noProblem || project.id === 'p1' ? [] : [{ id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' }]),
+    ...(noProblem || project.id === 'p1' || isAlignr ? [] : [{ id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' }]),
     // on Thela the research question comes right after the market chapter, inside the findings
     ...(project.id === 'p1' ? [{ id: 'findings', label: 'Findings' }, ...RESEARCH_NAV.flatMap((c) => c.id === 'ch-market' ? [{ ...c, sub: true }, { id: 'problem', label: 'Research', sub: true }] : [{ ...c, sub: true }])] : []),
     ...(project.youtubeId ? [{ id: 'prototype', label: 'Prototype' }] : []),
     ...(project.videoSrc ? [{ id: 'video', label: 'Video Walkthrough' }] : []),
-    ...(allImages.length > 0 || (project.book?.length ?? 0) > 1 ? [{ id: 'images', label: project.id === 'p1' ? 'Creative zine' : 'Visuals' }] : []),
+    ...(allImages.length > 0 || (project.book?.length ?? 0) > 1 ? [{ id: 'images', label: project.id === 'p1' ? 'Creative zine' : isAlignr ? 'Poster' : 'Visuals' }] : []),
   ];
 
   // The progress line: how far down the project you are (0 to 1), and where each heading sits on it.
@@ -167,17 +171,17 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed inset-0 z-[60] bg-paper pt-24 pb-8"
+      className="fixed inset-0 z-[60] bg-paper"
       style={{ display: 'flex', justifyContent: 'center' }}
     >
       <div className="w-full px-3 md:px-5 flex flex-col md:flex-row" style={{ height: '100%', overflow: 'hidden' }}>
         {/* Back, in the top-left corner on wide screens (phones have their own Back button below) */}
-        <button onClick={handleClose} className="hidden md:inline-flex items-center gap-2 absolute left-5 top-24 z-30 font-bold text-lg cursor-pointer hover:text-cobalt transition-colors group">
+        <button onClick={handleClose} className={`hidden md:inline-flex items-center gap-2 absolute left-5 top-[140px] z-30 font-bold text-lg cursor-pointer hover:text-cobalt transition-colors group`}>
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Back
         </button>
         {/* LEFT rail: the progress line (no menu opens from it) */}
         <div
-          className="hidden md:block absolute left-0 top-44 bottom-28 z-20"
+          className="hidden md:block absolute left-0 top-56 bottom-28 z-20"
           style={{ width: '36px' }}
         >
           {/* A straight gray line that fills with blue as you scroll. Each heading has a dot on it, blue once you have reached it.
@@ -236,7 +240,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
         </div>
 
         {/* Mobile Back Button */}
-        <div className="md:hidden w-full shrink-0 mb-2 pt-4 px-1 flex justify-between items-center z-50">
+        <div className="md:hidden w-full shrink-0 mb-2 pt-24 px-1 flex justify-between items-center z-50">
           <button onClick={handleClose} className="hover:text-cobalt flex items-center gap-2 font-bold text-lg cursor-pointer transition-colors">
             <ArrowLeft size={20} /> Back
           </button>
@@ -252,11 +256,11 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
               setActiveTab(navItems[navItems.length - 1].id);
             }
           }}
-          className="no-scrollbar px-3 pt-4 pb-10 md:pt-8 md:pl-14 md:pr-14"
+          className="no-scrollbar px-3 pt-4 pb-10 md:pt-32 md:pl-14 md:pr-14"
           style={{ flex: 1, minHeight: 0, minWidth: 0, overflowY: 'auto' }}
         >
           <div className="max-w-6xl mx-auto">
-          <div className={`mb-24 flex flex-col gap-8 ${questionInHeader ? 'md:flex-row md:items-end md:justify-between' : ''}`}>
+          <div className={`mb-24 flex flex-col gap-8 ${questionInHeader ? 'md:flex-row md:items-end md:justify-between' : ''} ${isAlignr ? 'relative' : ''}`}>
             <div className="flex flex-col gap-6 shrink-0">
               <h1 className="text-5xl md:text-8xl capitalize w-min text-left font-display font-medium tracking-tight leading-[0.9] text-ink">
                 {project.title}
@@ -280,13 +284,15 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
           {/* TL;DR: the first thing on every project page */}
           {project.tldr && (
-            <section id="tldr" className={project.tldrImage ? 'scroll-mt-32 mb-24 sm:-mt-16' : 'scroll-mt-32 mb-24 md:mb-32'}>
-              <div className={project.tldrImage ? 'grid gap-10 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-2 lg:gap-16 items-end' : ''}>
+            <section id="tldr" className={project.tldrImage || isAlignr ? 'scroll-mt-32 mb-24 sm:-mt-16' : 'scroll-mt-32 mb-24 md:mb-32'}>
+              <div className={project.tldrImage || isAlignr ? 'grid gap-10 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-2 lg:gap-16 items-end' : ''}>
                 <div className="sm:-mb-2">
                   <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">tl;dr</h2>
                   <p className="font-sans text-lg leading-relaxed"><Marked text={project.tldr} /></p>
                 </div>
                 {/* the full orange cat: the front panel of the pack, on the right of the tl;dr */}
+                {/* Alignr: the stick figure to play with takes the cat's place, on the right of the tl;dr and rising up beside the name */}
+                {isAlignr && <SlouchFigure className="justify-self-end sm:-mt-[110px] sm:-mb-[13px] w-full max-w-[460px]" />}
                 {project.tldrImage && <img src={project.tldrImage} alt={`${project.title}, the front of the pack`} className="block justify-self-center sm:-mt-[110px]" style={{ width: 'min(100%, 293px, calc(62vh * 0.6971))', height: 'auto' }} />}
               </div>
             </section>
@@ -297,7 +303,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Overview</h2>
             <div className="text-lg font-sans leading-relaxed space-y-6">
               {project.description.map((p, i) => (
-                <p key={i}>{p}</p>
+                <p key={i}><Marked text={p} /></p>
               ))}
             </div>
           </section>
@@ -305,21 +311,22 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           <section id="concept" className="scroll-mt-32 mb-32">
             <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Concept</h2>
             <div className="text-lg font-sans leading-relaxed space-y-6">
-              <p>{project.concept || "Design conceptualization focusing on user experience and visual narrative."}</p>
+              <p><Marked text={project.concept || "Design conceptualization focusing on user experience and visual narrative."} /></p>
             </div>
           </section>
 
           </>)}
 
           {isPawly && <PawlyCaseStudy />}
+          {isAlignr && <AlignrCaseStudy />}
 
-          {!questionInHeader && !isPawly && !noProblem && (
+          {!questionInHeader && !isPawly && !isAlignr && !noProblem && (
           <section id="problem" className="scroll-mt-32 mb-32">
             <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">
               {project.researchQuestion ? 'Research Question' : 'Problem Statement'}
             </h2>
             <div className="text-lg font-sans leading-relaxed space-y-6">
-              <p>{project.researchQuestion || project.problemStatement || "Project challenge and user pain points analysis."}</p>
+              <p><Marked text={project.researchQuestion || project.problemStatement || "Project challenge and user pain points analysis."} /></p>
             </div>
           </section>
           )}
@@ -374,7 +381,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
           {!isPawly && (standardImages.length > 0 || mockups.length > 0 || pages.length > 0 || (project.book?.length ?? 0) > 1) && (
             <section id="images" className="scroll-mt-32 mb-32">
-              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">{project.id === 'p1' ? 'Creative zine' : 'Visuals'}</h2>
+              <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">{project.id === 'p1' ? 'Creative zine' : isAlignr ? 'Poster' : 'Visuals'}</h2>
               {project.id === 'p1' && (
                 <p className="font-sans text-lg leading-relaxed mb-12">
                   The research, retold as a zine that gives the reader a quick feel for the market. It is a multisensory zine, bringing in sound, touch and smell, and it shows how the market works and how its stakeholders come together to shape everyday life there.
@@ -444,7 +451,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
                 {/* The whole magazine, flipped by clicking */}
                 {project.book && project.book.length > 1 && <FlipBook faces={project.book.map((s) => encodeURI(s))} alt={`${project.title} ${project.category.toLowerCase().includes('zine') ? 'zine' : 'magazine'}`}
-                  spreadOverlays={project.id === 'p1' ? { 5: <ParkingGame parked={carParked} onParked={setCarParked} /> } : undefined}
+                  spreadOverlays={project.id === 'p1' ? { 2: <SoundHint />, 5: <ParkingGame parked={carParked} onParked={setCarParked} /> } : undefined}
                   spreadAudio={project.id === 'p1' ? { 2: encodeURI('/Municipal market/audio/market-sound.mp3') } : undefined} />}
 
                 {/* Placeholder Fallback */}

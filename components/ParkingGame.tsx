@@ -130,8 +130,8 @@ export const ParkingGame: React.FC<{ parked: boolean; onParked: (v: boolean) => 
           It goes in the margin to the right of the book where there is room for it, and above the book where there is not. */}
       <div className="absolute font-sans"
         style={wide
-          ? { left: size.w + SIDE_GAP, bottom: size.h - textBottom, width: sideW, textAlign: 'left', fontSize: 14, lineHeight: 1.35, pointerEvents: 'none', color: parked ? '#2A52BE' : '#1A1A1A', transition: 'color 250ms ease' }
-          : { right: '3%', bottom: 'calc(100% + 12px)', whiteSpace: 'nowrap', textAlign: 'right', fontSize: 'clamp(11px, 1.45vw, 14px)', lineHeight: 1.3, pointerEvents: 'none', color: parked ? '#2A52BE' : '#1A1A1A', transition: 'color 250ms ease' }}>
+          ? { left: size.w + SIDE_GAP, bottom: size.h - textBottom, width: sideW, textAlign: 'left', fontSize: 14, lineHeight: 1.35, pointerEvents: 'none', color: '#2A52BE' }
+          : { right: '3%', bottom: 'calc(100% + 12px)', whiteSpace: 'nowrap', textAlign: 'right', fontSize: 'clamp(11px, 1.45vw, 14px)', lineHeight: 1.3, pointerEvents: 'none', color: '#2A52BE' }}>
         {parked
           ? <>You got it. <button type="button" onClick={again} className="underline underline-offset-4 cursor-pointer" style={{ pointerEvents: 'auto' }}>Again</button></>
           : wrong
@@ -141,7 +141,7 @@ export const ParkingGame: React.FC<{ parked: boolean; onParked: (v: boolean) => 
 
       {/* a curvy arrow from that line to the car; it draws itself, and goes once the car is parked */}
       <svg aria-hidden="true" viewBox={wide ? `0 0 ${size.w} ${size.h}` : `0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full" style={{ overflow: 'visible', pointerEvents: 'none', opacity: parked ? 0 : dragging ? 0.25 : 1, transition: 'opacity 250ms ease' }}>
-        <g fill="none" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <g fill="none" stroke="#2A52BE" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <path d={arrow.line} pathLength="1" strokeDasharray="1" style={{ animation: 'parkArrow 800ms 200ms cubic-bezier(.4,0,.2,1) both' }} />
           <path d={arrow.head} pathLength="1" strokeDasharray="1" style={{ animation: 'parkArrow 220ms 900ms ease-out both' }} />
         </g>

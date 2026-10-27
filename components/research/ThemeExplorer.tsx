@@ -17,7 +17,7 @@ export const ThemeExplorer: React.FC = () => {
 
   return (
     <Chapter id="ch-interviews" n="02" kicker="Interviews" title="What people told us"
-      intro="Seven themes came up in the interviews, ranked here by how often they recurred. Hover one to see who raised it. The ranking is by recurrence, not by an exact count.">
+      intro="**Seven themes** came up in the interviews, ranked here by **how often they recurred**. Hover one to see who raised it. The ranking is by recurrence, not by an exact count.">
       <div className="grid lg:grid-cols-[1fr_1.1fr] gap-6 items-start">
         <div className="flex flex-col gap-1 lg:pr-12"> {/* the right padding shortens the bars, leaving a gap before the quotes beside them */}
           {/* the themes are plain rows (no card behind them); the open one is shown in blue */}

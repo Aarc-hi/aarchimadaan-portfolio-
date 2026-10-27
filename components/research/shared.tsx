@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Marked } from '../Marked';
 
 // ── Evidence linking: the insights light up the findings behind them ──
 interface EvidenceState {
@@ -94,10 +95,11 @@ export const useCountUp = (target: number, start: boolean, ms = 1400) => {
 export const Chapter: React.FC<{ id: string; n: string; kicker: string; title: string; intro?: string; children: React.ReactNode }> = ({ id, n, kicker, title, intro, children }) => (
   <div id={id} className="scroll-mt-8 mb-28 md:mb-36">
     <h3 className="font-display font-normal text-lg tracking-wide leading-[1.1] mb-4 pb-3 border-b border-cobalt/25 text-cobalt">{title}</h3>
-    {intro && <p className="font-sans text-lg mb-10 leading-relaxed">{intro}</p>}
+    {intro && <p className="font-sans text-lg mb-10 leading-relaxed"><Marked text={intro} /></p>}
     {children}
   </div>
 );
 
 export const tile = 'bg-paper rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.08)]';
 export const labelCls = 'font-sans text-[11px] tracking-wide';
+
