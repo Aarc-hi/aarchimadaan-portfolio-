@@ -19,7 +19,7 @@ export const TopNav: React.FC<TopNavProps> = ({ currentView, setView, forceHidde
 
   return (
     <nav
-      className={`pointer-events-none fixed top-0 left-0 w-full z-40 pt-[34px] md:pt-[54px] pb-3 pl-[84px] pr-[6.25vh] flex justify-end gap-5 md:gap-16 font-sans text-sm transition-transform duration-300 ease-out ${
+      className={`pointer-events-none fixed top-0 left-0 w-full z-40 pt-[34px] md:pt-[54px] pb-3 pl-[84px] pr-[6.25vh] flex justify-end gap-5 md:gap-14 font-sans text-[13px] transition-transform duration-300 ease-out ${
         hidden ? '-translate-y-full' : 'translate-y-0'
       }`}
     >
@@ -29,11 +29,11 @@ export const TopNav: React.FC<TopNavProps> = ({ currentView, setView, forceHidde
         type="button"
         aria-label="Aarchi — home"
         onClick={() => { setView('HOME'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-        className="pointer-events-auto hidden md:block absolute top-[54px] h-[20px] cursor-pointer bg-ink hover:bg-cobalt transition-colors duration-300"
+        className="pointer-events-auto hidden md:block absolute top-[56px] h-[16px] cursor-pointer bg-ink hover:bg-cobalt transition-colors duration-300"
         style={{
           // --mascot-corner is set every frame by MascotHero: 0 while the mascot is elsewhere, 1 once it sits in the
           // corner. With no mascot in the corner the logotype takes the top-left; as the mascot arrives it is pushed right.
-          left: 'calc(32px + 96px * var(--mascot-corner, 1))',
+          left: 'calc(32px + 78px * var(--mascot-corner, 1))',
           aspectRatio: '661 / 129', // the logotype file, trimmed to the lettering
           WebkitMaskImage: 'url(/aarchi-logotype.svg)',
           maskImage: 'url(/aarchi-logotype.svg)',

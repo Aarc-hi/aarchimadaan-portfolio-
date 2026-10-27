@@ -312,9 +312,9 @@ export const MascotHero: React.FC<MascotHeroProps> = ({ isHome, onHome, onIntroR
       // Phone:   character, then the big words, then the intro line, one under the other.
       const artH0 = isDesktop ? Math.min(vh * HERO.artVhDesktop, cw * 0.36) : Math.min(vh * HERO.artVhMobile, cw * 0.66); // the most height the art may take
       const artW0 = (0.473 / 0.562) * artH0;
-      const SMALL = isDesktop ? 170 : 120;
-      const NAV_X = isDesktop ? -16 : -18;
-      const NAV_Y = isDesktop ? -18 : -14;
+      const SMALL = isDesktop ? 130 : 120;       // the mascot's size once it sits in the top-left corner
+      const NAV_X = isDesktop ? -4.5 : -18;      // (chosen so the art's left edge and its middle line up with the logotype)
+      const NAV_Y = isDesktop ? 2 : -14;
       const gap = isDesktop ? 32 : 0;            // clear of the art even when the mascot tilts toward the cursor
       const SIDE = Math.max(32, (cw - 1152) / 2); // the side margin of the page's content column (max-w-6xl), at least 32px
       const LINE = 1.06;                         // distance between the two word lines, in em
