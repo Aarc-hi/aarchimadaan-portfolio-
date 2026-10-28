@@ -11,6 +11,7 @@ import { ParkingGame } from './ParkingGame';
 import { SoundHint } from './SoundHint';
 import { AlignrCaseStudy, ALIGNR_NAV } from './alignr/AlignrCaseStudy';
 import { SlouchFigure } from './alignr/SlouchFigure';
+import { PenCaseStudy, PEN_NAV_A } from './penhospital/PenCaseStudy';
 interface ProjectDetailViewProps {
   project: Project;
   setView: (view: ViewState) => void;
@@ -32,7 +33,8 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   // Pawly has its own set of sections (components/pawly), so it skips the generic ones too.
   const isPawly = project.id === 'p4';
   const isAlignr = project.id === 'p2';   // Alignr has its own sections too (components/alignr), with a figure to play with beside the title
-  const showIntro = project.id !== 'p1' && !isPawly && !isAlignr;
+  const isPen = project.id === 'p5';      // The Pen Hospital has its own sections too (components/penhospital)
+  const showIntro = project.id !== 'p1' && !isPawly && !isAlignr && !isPen;
   // ...and shows its research question as the heading above its findings, with its team, role and date beside the title.
   const questionInHeader = project.id === 'p1' && !!project.researchQuestion;
   const noProblem = project.id === 'p3'; // Sonic has no problem statement section
@@ -117,13 +119,14 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   const navItems: { id: string; label: string; sub?: boolean }[] = isPawly ? [...tldrNav, ...PAWLY_NAV] : [
     ...tldrNav,
     ...(isAlignr ? ALIGNR_NAV : []),
+    ...(isPen ? PEN_NAV_A : []),
     ...(showIntro ? [{ id: 'overview', label: 'Overview' }, { id: 'concept', label: 'Concept' }] : []),
-    ...(noProblem || project.id === 'p1' || isAlignr ? [] : [{ id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' }]),
+    ...(noProblem || project.id === 'p1' || isAlignr || isPen ? [] : [{ id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' }]),
     // on Thela the research question comes right after the market chapter, inside the findings
     ...(project.id === 'p1' ? [{ id: 'findings', label: 'Findings' }, ...RESEARCH_NAV.flatMap((c) => c.id === 'ch-market' ? [{ ...c, sub: true }, { id: 'problem', label: 'Research', sub: true }] : [{ ...c, sub: true }])] : []),
     ...(project.youtubeId ? [{ id: 'prototype', label: 'Prototype' }] : []),
     ...(project.videoSrc ? [{ id: 'video', label: 'Video Walkthrough' }] : []),
-    ...(allImages.length > 0 || (project.book?.length ?? 0) > 1 ? [{ id: 'images', label: project.id === 'p1' ? 'Creative zine' : isAlignr ? 'Poster' : 'Visuals' }] : []),
+    ...(!isPen && (allImages.length > 0 || (project.book?.length ?? 0) > 1) ? [{ id: 'images', label: project.id === 'p1' ? 'Creative zine' : isAlignr ? 'Poster' : 'Visuals' }] : []),
   ];
 
   // The progress line: how far down the project you are (0 to 1), and where each heading sits on it.
@@ -319,8 +322,9 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
           {isPawly && <PawlyCaseStudy />}
           {isAlignr && <AlignrCaseStudy />}
+          {isPen && <PenCaseStudy />}
 
-          {!questionInHeader && !isPawly && !isAlignr && !noProblem && (
+          {!questionInHeader && !isPawly && !isAlignr && !isPen && !noProblem && (
           <section id="problem" className="scroll-mt-32 mb-32">
             <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">
               {project.researchQuestion ? 'Research Question' : 'Problem Statement'}
@@ -348,7 +352,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           {project.youtubeId && (
             <section id="prototype" className="scroll-mt-32 mb-32">
               <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Prototype</h2>
-              <div className="w-full aspect-video border-2 border-black/20 overflow-hidden bg-black shadow-hard">
+              <div className="w-full aspect-video overflow-hidden bg-black">
                 <iframe
                   width="100%"
                   height="100%"
@@ -366,7 +370,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           {project.videoSrc && (
             <section id="video" className="scroll-mt-32 mb-32">
               <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Video Walkthrough</h2>
-              <div className="w-full aspect-video border-2 border-black/20 overflow-hidden bg-black shadow-hard">
+              <div className="w-full aspect-video overflow-hidden bg-black">
                 <video
                   controls
                   className="w-full h-full object-contain"
@@ -379,7 +383,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
             </section>
           )}
 
-          {!isPawly && (standardImages.length > 0 || mockups.length > 0 || pages.length > 0 || (project.book?.length ?? 0) > 1) && (
+          {!isPawly && !isPen && (standardImages.length > 0 || mockups.length > 0 || pages.length > 0 || (project.book?.length ?? 0) > 1) && (
             <section id="images" className="scroll-mt-32 mb-32">
               <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">{project.id === 'p1' ? 'Creative zine' : isAlignr ? 'Poster' : 'Visuals'}</h2>
               {project.id === 'p1' && (

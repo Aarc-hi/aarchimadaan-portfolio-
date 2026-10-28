@@ -153,12 +153,12 @@ export const PROJECTS: Project[] = [
     year: '2025',
     category: '3D World Building / VR',
     description: [
-      'The Pen Hospital is a **virtual reality experience** inspired by a **real pen repair shop in Thrissur**. Set during the 1960s Land Reform period, it explores how everyday objects—like pens used to sign land contracts, can carry **historical and emotional significance**.',
-      'Users enter a hospital-like environment where they interact with and repair these pens, engaging with both the space and its context.'
+      'The Pen Hospital is a **virtual reality experience** inspired by the real **Pen Hospital in Thrissur**, where fountain pens have been repaired for generations. In the simulation, pens become **characters** with personalities shaped by Kerala’s **socio-political history of the 1960s**.',
+      'A proud, casteist pen, a broken judge’s pen and a socialist pen stand for different ideologies and moments connected to the **Land Reform Act**. By playing the **pen doctor**, the user explores how everyday objects like pens carried the power to define identity, land rights and social change.'
     ],
-    concept: 'The project reimagines **broken pens as patients**, turning repair into an **act of care** rather than utility. Through this metaphor, the interaction reflects ideas of creativity, labor, and the lasting impact of decisions tied to these objects. The experience uses simple actions to create a more reflective and meaningful engagement.',
+    concept: 'The pens are not patients: they are **characters**. Each has a personality shaped by the politics of its time, and carries what its owner felt: pride, doubt, hope. **Repairing a pen** makes it speak, so the player listens to the story behind the Land Reform Act instead of reading about it. In a world where land and standing were written down, a pen could **define identity**, **land rights** and **social change**.',
     problemStatement: 'How might we use **virtual reality** to transform everyday objects into **meaningful interactive experiences** that communicate deeper **historical and emotional narratives**?',
-    tldr: 'A VR experience based on a **real pen repair shop in Thrissur**, where repairing broken pens becomes an **act of care**. Set in the 1960s Land Reform period, it turns the pens once used to sign land contracts into patients, so simple actions carry history and emotion.',
+    tldr: 'A VR experience inspired by the real **Pen Hospital in Thrissur**, set in the **1960s**. Pens become **characters** shaped by Kerala’s politics, a proud casteist pen, a broken judge’s pen and a socialist pen, and as the **pen doctor** you mend them and hear what they have to say about the **Land Reform Act**.',
     tech: ['Unity', 'Blender'],
     coverImage: '/3d world building/Screenshot 2026-04-30 180238ev.png',
     images: ['/3d world building/Screenshot 2026-04-30 180238ev.png'],

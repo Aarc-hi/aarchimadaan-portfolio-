@@ -22,8 +22,9 @@ const INTRO_STAGGER_MS = 130; // delay between one card starting and the next
 
 // Cards are portrait (about 3:4) crops of each project's cover (object-fit: cover).
 const COVER_OVERRIDE: Record<string, { src?: string; pos?: string }> = {
-  p3: { pos: '60% 45%' },
-  p4: { src: '/PAWLY/pawly/cover.jpg' },
+  p3: { src: '/Sonic magazine visual stock/cover-portrait-2.jpg' },   // the whole picture's height, with the open spread in the middle
+  p5: { src: '/3d world building/cover-portrait.jpg' },             // the desk, the fan and the window, cut to a portrait
+  p4: { src: '/PAWLY/pawly/cover-centered-2.jpg' },   // the box on its own, in the middle of the picture
 };
 export function coverOf(p: Project) {
   const o = COVER_OVERRIDE[p.id];
