@@ -2,17 +2,6 @@ import { Experience, Project } from './types';
 
 export const EXPERIENCES: Experience[] = [
   {
-    id: 'exp1',
-    role: 'Graphic Design Intern',
-    company: 'Teamarcs Technologies',
-    period: 'Dec 2024 - Jan 2025',
-    points: [
-      'Created social media content and graphics, and designed business cards and print materials.',
-      'Improved skills in Adobe Photoshop, Illustrator, and Figma.',
-      'Contributed to UI design by enhancing layouts and user experience.'
-    ]
-  },
-  {
     id: 'exp2',
     role: 'Summer Intern',
     company: 'Serendipity Arts Foundation',
@@ -30,6 +19,17 @@ export const EXPERIENCES: Experience[] = [
     points: [
       'Supported artists with installations, set design, and spatial setup.',
       'Handled coordination and problem-solving during live exhibitions and public-facing event environments.'
+    ]
+  },
+  {
+    id: 'exp1',
+    role: 'Graphic Design Intern',
+    company: 'Teamarcs Technologies',
+    period: 'Dec 2024 - Jan 2025',
+    points: [
+      'Created social media content and graphics, and designed business cards and print materials.',
+      'Improved skills in Adobe Photoshop, Illustrator, and Figma.',
+      'Contributed to UI design by enhancing layouts and user experience.'
     ]
   }
 ];
@@ -63,7 +63,7 @@ export const TOOLS: string[] = [
 export const PROJECTS: Project[] = [
   {
     id: 'p1',
-    title: 'Thela thaila thikana',
+    title: 'Thela Thaila Thikana',
     date: 'March 2025',
     group: '6 people',
     myRole: 'Research and creatives',

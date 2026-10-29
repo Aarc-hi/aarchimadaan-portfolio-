@@ -103,8 +103,8 @@ type Geo = { vb: [number, number, number, number]; xs: number[]; ys: number[] };
 const GEO: { word: Geo; mark: Geo } = {
   word: {
     vb: [-3000, -1000, 7400, 2454], // wide, so the guide lines run out to the edges of the panel (it clips them)
-    xs: [10, 394, 663, 973, 1178, 1376],
-    ys: [14, 152, 436],
+    xs: [10, 331, 394, 663, 701, 973, 1002, 1122, 1178, 1376],   // 331 and 701: the paw's side toes; 1002 and 1122: the sides of the L's stem
+    ys: [14, 63, 152, 196, 436],                      // 63: top of the paw's toes, 196: top of its pad
   },
   mark: {
     vb: [-1500, -800, 3700, 2355],

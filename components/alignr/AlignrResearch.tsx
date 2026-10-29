@@ -30,7 +30,7 @@ const PostureSlider: React.FC = () => {
   const [hold, setHold] = useState(false);
   useEffect(() => {
     if (hold) return;
-    const t = window.setTimeout(() => setI((c) => (c + 1) % POSTURES.length), 4000);
+    const t = window.setTimeout(() => setI((c) => (c + 1) % POSTURES.length), 2500);
     return () => window.clearTimeout(t);
   }, [hold, i]);
   const near = (clientX: number) => {

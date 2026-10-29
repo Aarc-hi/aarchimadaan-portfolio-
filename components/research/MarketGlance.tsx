@@ -108,18 +108,22 @@ export const MarketGlance: React.FC = () => {
                 { d: 'M -30 152 L 6 152 M 0 146 L 7 152 L 0 158', w: 1.3 },
                 { d: 'M 408 152 L 272 152 M 279 146 L 271 152 L 279 158', w: 1.3 },
                 { d: 'M -30 60 L 44 60 M 38 54 L 45 60 L 38 66', w: 1.3 },
-                { d: 'M -30 103 L 14 103 M 7 97 L 15 103 L 7 109', w: 0.8 },       // Entry: the way in, at the upper opening of the lane: the arrow points into the market
-                { d: 'M 15 208 L -30 208 M -22 202 L -30 208 L -22 214', w: 0.8 },   // Exit: the way out, at the lower opening: the arrow points out of the market
               ] as { d: string; w: number }[]).map(({ d, w }) => (
                 <g key={d} fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={d} stroke="#fff" strokeWidth={w + 2.3} />
+                  <path d={d} stroke="#fff" strokeWidth={w + 0.3} />
                   <path d={d} className="stroke-cobalt" strokeWidth={w} />
                 </g>
               ))}
               <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="150">Stalls /</tspan><tspan x="-35" y="160">vendors</tspan></text>
               <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="63">Shops</tspan></text>
-              <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="106">Entry</tspan></text>
-              <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="211">Exit</tspan></text>
+              {/* Entry and Exit: a ring on each opening of the lane, with the name just outside the photo beside it */}
+              {[{ y: 103, t: 'Entry' }, { y: 208, t: 'Exit' }].map(({ y, t }) => (
+                <g key={t}>
+                  <circle cx="15" cy={y} r="5" fill="none" stroke="#fff" strokeWidth="1.6" />
+                  <circle cx="15" cy={y} r="5" fill="none" className="stroke-cobalt" strokeWidth="1.3" />
+                  <text x="-6" y={y + 3} textAnchor="end" className="font-sans text-[7.5px] fill-cobalt">{t}</text>
+                </g>
+              ))}
               <text textAnchor="start" className="font-sans text-[7.5px] fill-cobalt"><tspan x="414" y="150">Parking</tspan><tspan x="414" y="160">area</tspan></text>
             </svg>
           </div>
