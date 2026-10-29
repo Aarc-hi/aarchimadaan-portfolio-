@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DAY_KINDS, DAY_STEPS, DayKind } from './thelaData';
-import { Chapter, glowClass, labelCls, tile, useEvidence, useJump } from './shared';
+import { Chapter, glowClass, labelCls, useEvidence, useJump } from './shared';
 
 const KIND_COLOR: Record<DayKind, string> = {
   home: 'rgba(26,26,26,0.20)',
@@ -37,7 +37,17 @@ export const DayInLife: React.FC = () => {
   const gridRef = useRef<HTMLDivElement>(null);
   const goToRef = useRef<(i: number) => void>(() => {});
   const [padTop, setPadTop] = useState(0);        // the scrolling column's own top padding (a pinned element has to be pulled up by it)
-  const [viewH, setViewH] = useState(700);   // the height of the scrolling column, so the dial's column is as tall as the screen
+  const [viewH, setViewH] = useState(700);   // the height of the scrolling column, so the dial can be pinned in the middle of the screen
+  const dialRef = useRef<HTMLDivElement>(null);
+  const [dialH, setDialH] = useState(420);    // the height of the dial block (dial, time, legend)
+  useEffect(() => {
+    const el = dialRef.current;
+    if (!el) return;
+    const m = () => setDialH(el.offsetHeight);
+    m();
+    const ro = new ResizeObserver(m); ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -156,12 +166,11 @@ export const DayInLife: React.FC = () => {
   return (
     <Chapter id="ch-day" n="05" kicker="A day in the life" title="A day in a life"
       intro="Valiben runs a **roadside toy stall**. Scroll through her day and watch the clock move. **Eight hours** go to home and family, and **eight to the stall**.">
-      <div ref={gridRef} className="grid lg:grid-cols-[340px_1fr] gap-6 lg:gap-10 items-start" style={{ '--day-h': `${viewH}px`, '--day-top': `${-padTop}px` } as React.CSSProperties}>
-        {/* On wide screens the dial's card stays in the middle of the screen while the hours go by on the right. It sits in a column
-            as tall as the screen that is pinned to the top, with the card centred in it: so it starts below the chapter's intro (where the
-            grid starts), and only reaches the middle of the screen as you scroll. */}
-        <div className="sticky top-0 lg:top-[var(--day-top)] z-10 self-start lg:h-[var(--day-h)] lg:flex lg:items-center">
-        <div className={`${tile} p-4 md:p-6 w-full`}>
+      <div ref={gridRef} className="grid lg:grid-cols-[340px_1fr] gap-6 lg:gap-10 items-start" style={{ '--day-h': `${viewH}px`, '--day-top': `${-padTop + Math.max(0, (viewH - dialH) / 2)}px`, '--day-pb': `${Math.max(24, dialH / 2 - 40)}px` } as React.CSSProperties}>
+        {/* On wide screens the dial stays in the middle of the screen while the hours go by on the right. It starts right under the
+            chapter's intro (level with the first hour), and is pinned with its middle at the middle of the screen once you scroll. */}
+        <div className="sticky top-0 lg:top-[var(--day-top)] z-10 self-start">
+        <div ref={dialRef} className="w-full">
           <svg viewBox="0 0 220 220" className="hidden lg:block w-full mx-auto" style={{ maxWidth: Math.max(130, Math.min(250, viewH - 290)) }} role="img" aria-label="24-hour dial from 6am to midnight">
             <circle cx="110" cy="110" r="90" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="18" />
             {DAY_STEPS.map((s, i) => (
@@ -180,14 +189,7 @@ export const DayInLife: React.FC = () => {
           </div>
 
           <div className="pt-5" aria-label="Hours of the day by activity">
-            <div className="flex h-3 rounded-full overflow-hidden gap-px">
-              {Array.from({ length: 18 }, (_, i) => {
-                const h = 6 + i; const idx = DAY_STEPS.findIndex((s) => h >= s.from && h < s.to);
-                return <div key={h} className="flex-1 transition-opacity duration-300" style={{ background: KIND_COLOR[DAY_STEPS[idx].kind], opacity: idx === cur ? 1 : 0.45 }} />;
-              })}
-            </div>
-            <div className="flex justify-between font-sans text-[11px] pt-1"><span>6am</span><span>12am</span></div>
-            <ul className="pt-4 hidden lg:grid grid-cols-2 gap-x-3 gap-y-2">
+            <ul className="hidden lg:grid grid-cols-2 gap-x-3 gap-y-2">
               {totals.map(({ k, h }) => (
                 <li key={k} className="flex items-center gap-2 font-sans text-[11px]">
                   <span className="w-3 h-3 rounded-sm shrink-0" style={{ background: KIND_COLOR[k] }} />
@@ -199,11 +201,11 @@ export const DayInLife: React.FC = () => {
         </div>
         </div>
 
-        <ol className="flex flex-col gap-4 lg:gap-10 lg:pt-[calc(var(--day-h)/2-40px)] lg:pb-[calc(var(--day-h)/2-40px)]">
+        <ol className="flex flex-col gap-4 lg:gap-10 lg:pb-[var(--day-pb)]">
           {DAY_STEPS.map((s, i) => (
             <li key={i}>
               <button type="button" data-i={i} ref={(el) => { refs.current[i] = el; }} onClick={() => goToRef.current(i)}
-                className={`w-full text-left rounded-2xl p-5 md:p-7 border-l-4 transition-all duration-200 ${i === cur ? 'border-cobalt bg-paper shadow-[0_8px_24px_rgba(0,0,0,0.08)] opacity-100' : 'border-black/10 opacity-45 hover:opacity-80'} ${s.evidence && active === 3 ? glowClass : ''}`}>
+                className={`w-full text-left rounded-2xl p-5 md:p-7 transition-all duration-200 ${i === cur ? 'bg-paper shadow-[0_8px_24px_rgba(0,0,0,0.08)] opacity-100' : 'opacity-45 hover:opacity-80'} ${s.evidence && active === 3 ? glowClass : ''}`}>
                 <p className="font-display text-lg tracking-tight pb-2 tabular-nums">{hr(s.from)} – {hr(s.to)}</p>
                 <p className="font-sans text-lg leading-relaxed max-w-xl">{s.text}</p>
               </button>

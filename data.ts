@@ -65,6 +65,8 @@ export const PROJECTS: Project[] = [
     id: 'p1',
     title: 'Thela thaila thikana',
     date: 'March 2025',
+    group: '6 people',
+    myRole: 'Research and creatives',
     year: '2025',
     category: 'UX Research & Zine',
     description: [
@@ -88,6 +90,8 @@ export const PROJECTS: Project[] = [
     id: 'p2',
     title: 'Alignr',
     date: 'April 2025',
+    group: '8 people',
+    myRole: 'Research, ideation, sketches, prototype and concept video',   // from the Team Contributions slide of the deck
     year: '2025',
     category: 'Product Design',
     description: [
@@ -106,16 +110,23 @@ export const PROJECTS: Project[] = [
     id: 'p3',
     title: 'SONIC',
     date: 'July 2025',
+    group: 'Individual',
     year: '2025',
     category: 'Editorial Design',
     description: [
       'Sonic is a magazine designed to explore **music genres**, their subgenres, influential artists, and iconic instruments.',
       'Each spread visually reflects the energy of its genre through **typography, scale shifts, alignment play, and structured negative space**.'
     ],
-    concept: 'Sonic translates **musical rhythm and genre identity** into a strong visual language through typography and structured layouts. As an exclusive editorial space, it brings together a **community of music enthusiasts**.',
+    concept: 'Sonic is a magazine that explores **music genres**, their subgenres, influential artists and iconic instruments. Each spread takes on the energy of its genre through **typography, scale shifts, alignment play and structured negative space**, turning **musical rhythm and genre identity** into a strong visual language. As an exclusive editorial space, it brings together a **community of music enthusiasts**.',
     problemStatement: 'How might we design a music magazine that effectively represents **multiple genres** while maintaining a **clear, engaging, and navigable visual system**?',
     tldr: 'A magazine about **music genres**, where each spread takes on the energy of its genre through **typography** and layout. It covers subgenres, influential artists and iconic instruments, held together by scale shifts, alignment play and structured negative space.',
     tech: ['InDesign', 'Photoshop', 'Typography', 'Grid Systems'],
+    tldrImage: '/Sonic magazine visual stock/saxophone-2.webp',   // the saxophone cut out, in the same place as Pawly's cat
+    tldrImageAspect: 348 / 900,
+    tldrImageAlt: 'A tenor saxophone',
+    tldrImageShadow: true,
+    tldrImageNotes: true,
+    headerNote: 'Turn your volume up and explore: the music changes as you turn the pages.',
     coverImage: '/Sonic magazine visual stock/FIRST IMAGE LARGE.png', // the home cover, no longer shown on the project page
     pages: [
       '/Sonic magazine visual stock/small frame with all pages.png'
@@ -130,6 +141,7 @@ export const PROJECTS: Project[] = [
     id: 'p4',
     title: 'Pawly',
     date: 'Jan 2026',
+    group: 'Individual',
     year: '2026',
     category: 'Packaging Design',
     description: [
@@ -149,7 +161,10 @@ export const PROJECTS: Project[] = [
   {
     id: 'p5',
     title: 'The Pen Hospital',
+    titleLines: ['The Pen', 'Hospital'],
     date: 'Nov 2025',
+    group: '5 people',
+    myRole: 'Asset making and development',
     year: '2025',
     category: '3D World Building / VR',
     description: [

@@ -2,7 +2,7 @@ import React from 'react';
 
 // A hand-drawn style sketch of a person seen from the back, wearing one of the ways the sensor was tried.
 // Every variant uses the same body, so the sketches can be compared; the thing being worn is drawn in blue.
-export type Wear = 'neckband' | 'belt' | 'final';
+export type Wear = 'neckband' | 'belt' | 'velcro' | 'final';
 
 const INK = '#1A1A1A';
 const BLUE = '#2A52BE';
@@ -60,6 +60,14 @@ export const BackSketch: React.FC<{ wear: Wear; className?: string; label?: stri
         <Device x={91} y={118} w={18} h={22} />
         <Blue w={4}><path d="M92 146 C90 160 86 172 76 186" /><path d="M108 146 C110 160 114 172 124 186" /></Blue>
         <Blue w={5}><path d="M64 186 C84 192 116 192 136 186" /></Blue>
+      </>)}
+
+      {wear === 'velcro' && (<>
+        {/* a Velcro patch on the clothes at the upper back (the soft side, drawn dotted) with the device pressed onto it, and its two tabs peeling at the sides */}
+        <Blue fill="rgba(42,82,190,0.10)" w={1.6}><rect x="82" y="108" width="36" height="42" rx="6" /></Blue>
+        <Blue w={1.4}><path d="M88 116 H112 M88 124 H112 M88 132 H112 M88 140 H112" strokeDasharray="1 3.2" /></Blue>
+        <Device x={91} y={116} w={18} h={26} />
+        <Blue w={2}><path d="M82 150 C76 154 74 160 78 164" /><path d="M118 150 C124 154 126 160 122 164" /></Blue>
       </>)}
 
       {wear === 'final' && (<>

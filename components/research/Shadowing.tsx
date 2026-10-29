@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SHADOW_BEATS } from './thelaData';
 import { Chapter, glowClass, useEvidence, useJump } from './shared';
 
@@ -17,6 +17,15 @@ export const Shadowing: React.FC = () => {
   const last = SHADOW_BEATS.length - 1;
   const beat = SHADOW_BEATS[i];
   useJump('uncertainty', () => setI(SHADOW_BEATS.findIndex((b) => b.id === 'uncertainty')));
+
+  // Left alone, the evening plays by itself, one moment after another, and starts again from the first. While the mouse is over it
+  // (or the dot has the focus) it waits, so you can scrub along it and read, and it carries on once you move away.
+  const [hold, setHold] = useState(false);
+  useEffect(() => {
+    if (hold) return;
+    const t = window.setTimeout(() => setI((c) => (c + 1) % SHADOW_BEATS.length), 3500);
+    return () => window.clearTimeout(t);
+  }, [hold, i]);
 
   const go = (n: number) => setI(Math.max(0, Math.min(last, n)));
   const glow = beat.id === 'uncertainty' && active === 3;
@@ -39,7 +48,7 @@ export const Shadowing: React.FC = () => {
   return (
     <Chapter id="ch-shadowing" n="06" kicker="Shadowing" title="Shadowing"
       intro="Life at **Ahmedabad’s Municipal Market**, from the pavement of C.G. Road. Move along the evening, one moment at a time.">
-      <div
+      <div onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} onFocus={() => setHold(true)} onBlur={() => setHold(false)}
         className={`transition-all duration-300 ${glow ? glowClass : ''}`}>
         {/* the evening, 4 PM onwards: the slider */}
         <div ref={line} className="relative h-20 mb-6 md:mb-8 cursor-pointer select-none touch-none"
@@ -48,6 +57,9 @@ export const Shadowing: React.FC = () => {
           onPointerUp={(e) => { if (e.pointerType !== 'mouse') setDragX(null); }}
           onPointerLeave={() => setDragX(null)} onPointerCancel={() => setDragX(null)}>
           <div className="absolute left-0 right-0 top-6 h-px bg-black/20" />
+          {/* the part of the evening that has gone by, in blue: it runs from the start up to the dot and moves with it */}
+          <div aria-hidden="true" className="absolute left-0 top-[23.5px] h-[2px] rounded-full bg-cobalt pointer-events-none"
+            style={{ width: `${thumb * 100}%`, transition: dragX !== null ? 'none' : 'width 700ms cubic-bezier(0.65,0,0.35,1)' }} />
           {MARKS.map((m) => (
             <div key={m.label} className="absolute top-0 -translate-x-1/2 text-center pointer-events-none" style={{ left: `${m.at * 100}%` }} aria-hidden="true">
               <div className="mx-auto w-px h-6 bg-black/25" />

@@ -11,6 +11,9 @@ const IDEAS: { name: string; img: string; wear: Wear; final?: boolean; pros: str
   { name: 'Strap-on belt', img: 'strap', wear: 'belt',
     pros: ['Secure and adjustable fit', 'Reusable and durable', 'Stable sensor placement'],
     cons: ['Slightly bulky', 'Takes time to wear', 'May feel restrictive'] },
+  { name: 'Velcro', img: 'velcro', wear: 'velcro',
+    pros: ['Quick to attach and remove', 'Can be moved to suit the clothes', 'Reusable'],
+    cons: ['Needs a Velcro patch on the clothes', 'Wears out with use', 'May show through thin clothing'] },
   { name: 'Stick-on adhesive device', img: 'final-product', wear: 'final', final: true,
     pros: ['Lightweight and discreet', 'No app, no setup', 'Silicone adhesive holds it in place'],
     cons: ['Could be more compact', 'Needs design and functionality refinement'] },
@@ -28,16 +31,15 @@ export const AlignrBuild: React.FC = () => (
         <span role="columnheader" className="text-cobalt">What worked</span>
         <span role="columnheader">What did not</span>
       </div>
-      {IDEAS.map((idea, n) => (
+      {IDEAS.map((idea) => (
         <div key={idea.name} role="row" className={`grid ${COLS} gap-y-6 items-start py-10 border-b border-black/10`}>
           <div role="cell">
             <BackSketch wear={idea.wear} label={`Sketch of a person from the back with the ${idea.name.toLowerCase()}`} className="block w-[124px] h-auto" />
           </div>
           <div role="cell" className="font-sans text-lg">
-            <div className="grid grid-cols-[auto_1fr] gap-x-4 items-baseline">
-              <span className="font-display tabular-nums text-cobalt leading-snug">{n + 1}</span>
+            <div className="flex flex-col">
               <span className="text-ink font-bold leading-snug">{idea.name}</span>
-              {idea.final && (<><span /><span className="font-sans text-[11px] tracking-wide text-cobalt mt-2">Final idea</span></>)}
+              {idea.final && <span className="font-sans text-[11px] tracking-wide text-cobalt mt-2">Final idea</span>}
             </div>
           </div>
           <div role="cell">
@@ -57,7 +59,7 @@ export const AlignrBuild: React.FC = () => (
   </Block>
 );
 export const AlignrExplorations: React.FC = () => (
-  <Block id="alignr-explorations" n="07" kicker="Form" title="Form">
+  <Block id="alignr-explorations" n="08" kicker="Final form" title="Final form">
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
       {[1, 2, 3, 4, 5, 6].map((n) => <img key={n} src={`/ALIGNR/deck/final0${n}.jpg`} alt={`The final device, view ${n}`} className="block w-full h-auto" />)}
     </div>
@@ -75,7 +77,7 @@ const FEEDBACK = [
 ];
 
 export const AlignrTesting: React.FC = () => (
-  <Block id="alignr-testing" n="08" kicker="Testing" title="Testing"
+  <Block id="alignr-testing" n="07" kicker="Testing" title="Testing"
     intro="The prototype was **worn and tried by people** while we watched. This is **what they told us**.">
     <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-stretch">
       {/* the photos fill the same height as the list, so their top and bottom edges line up with its first and last lines */}

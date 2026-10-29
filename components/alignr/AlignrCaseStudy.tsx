@@ -13,8 +13,8 @@ export const ALIGNR_NAV = [
   { id: 'alignr-insights', label: 'Insights' },
   { id: 'alignr-how', label: 'How it works' },
   { id: 'alignr-building', label: 'Building it' },
-  { id: 'alignr-explorations', label: 'Form', sub: true },
   { id: 'alignr-testing', label: 'Testing' },
+  { id: 'alignr-explorations', label: 'Final form' },
 ];
 
 export const AlignrCaseStudy: React.FC = () => (
@@ -24,7 +24,7 @@ export const AlignrCaseStudy: React.FC = () => (
     <AlignrInsights />
     <AlignrHow />
     <AlignrBuild />
-    <AlignrExplorations />
     <AlignrTesting />
+    <AlignrExplorations />
   </>
 );

@@ -21,9 +21,11 @@ const frameSrc = (n: number) => `/mascot/frame_${n}_${FRAMES[n]}.png`;
 const EXPRESSIONS = Object.keys(FRAMES).map(Number);
 let lastArrival = 0; // so two visits in a row never land on the same face
 
-const MAX_SHIFT = 82; // px each label/value slides away from the mascot
-const PLATEAU = 40; // rows this close to the mascot's middle get the full shift
-const FALLOFF = 140; // vertical reach of the "parting"
+// everything here is sized together (mascot, text, spacing): the page is scaled by BIG relative to its first design, so it fills the screen
+const BIG = 1.43;
+const MAX_SHIFT = Math.round(82 * BIG); // px each label/value slides away from the mascot
+const PLATEAU = Math.round(40 * BIG); // rows this close to the mascot's middle get the full shift
+const FALLOFF = Math.round(140 * BIG); // vertical reach of the "parting"
 const smooth = (t: number) => t * t * (3 - 2 * t);
 
 const rowHTML = (r: Row) => {
@@ -38,7 +40,7 @@ const CSS = `
 .cv-stage, .cv-corner { animation: cv-in .8s ease-out .5s both; }
 @keyframes cv-in { from { opacity: 0; } to { opacity: 1; } }
 
-.cv-mascot { position: absolute; left: 50%; top: 50%; width: 210px; height: 210px; transform: translate(-50%, -50%); perspective: 900px; }
+.cv-mascot { position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; transform: translate(-50%, -50%); perspective: 900px; }
 .cv-tilt { width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; }
 .cv-breathe { width: 100%; height: 100%; animation: cv-breathe 4.2s ease-in-out infinite; }
 .cv-mascot img { width: 100%; height: 100%; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 28px 48px rgba(0,0,0,.11)); }
@@ -46,15 +48,15 @@ const CSS = `
 
 .cv-stage { position: absolute; inset: 0; overflow: hidden; }
 .cv-copy { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
-.cv-row { display: flex; height: 24.5px; line-height: 24.5px; font-size: 14px; white-space: nowrap; }
+.cv-row { display: flex; height: 35px; line-height: 35px; font-size: 20px; white-space: nowrap; }
 .cv-lab, .cv-val { flex: 1 1 0; will-change: transform; }
-.cv-lab { text-align: right; padding-right: 10px; color: #1A1A1A; }
-.cv-val { text-align: left; padding-left: 10px; color: #A9A89F; }
+.cv-lab { text-align: right; padding-right: 14px; color: #1A1A1A; }
+.cv-val { text-align: left; padding-left: 14px; color: #A9A89F; }
 .cv-clock { font-variant-numeric: tabular-nums; }
 a.cv-val { pointer-events: auto; text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 4px; transition: color .2s, text-decoration-color .2s; }
 a.cv-val:hover { color: #2A52BE; text-decoration-color: currentColor; }
 
-.cv-corner { position: absolute; bottom: 26px; font-size: 14px; }
+.cv-corner { position: absolute; bottom: 28px; font-size: 16px; }
 .cv-status { left: 28px; display: flex; align-items: center; gap: 10px; }
 .cv-dot { width: 8px; height: 8px; border-radius: 50%; background: #2A52BE; position: relative; }
 .cv-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid #2A52BE; animation: cv-ping 1.8s ease-out infinite; }
@@ -62,8 +64,8 @@ a.cv-val:hover { color: #2A52BE; text-decoration-color: currentColor; }
 .cv-tagline { right: 28px; color: #A9A89F; }
 
 @media (max-width: 719px) {
-  .cv-mascot { width: 150px; height: 150px; top: 22vh; }
-  .cv-row { height: auto; line-height: 1.3; flex-direction: column; padding: 6px 0; }
+  .cv-mascot { width: 190px; height: 190px; top: 22vh; }
+  .cv-row { height: auto; line-height: 1.3; font-size: 16px; flex-direction: column; padding: 6px 0; }
   .cv-lab, .cv-val { text-align: left; padding: 0; flex: none; }
   .cv-lab { font-size: 12px; opacity: .5; }
   .cv-row.cv-cont { padding-top: 0; }

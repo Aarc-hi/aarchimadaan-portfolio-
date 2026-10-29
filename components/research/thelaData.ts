@@ -5,7 +5,6 @@ export const MARKET_STATS = [
   { id: 'opened', value: '1970s', label: 'Opened', note: 'Among the first hangout spots in west Ahmedabad, especially in the 1980s.' },
   { id: 'shops', value: 49, label: 'Small shops', note: 'Shops sit on the north, east and south sides of a central courtyard used for parking.' },
   { id: 'area', value: 7000, unit: 'm²', label: 'Market area', note: 'Next to one of Ahmedabad’s busiest streets, C.G. Road in Navrangpura.' },
-  { id: 'rent', value: '₹75–₹750', label: 'Monthly rent', note: 'What the Ahmedabad Municipal Corporation (AMC) first leased the shops for.' },
 ] as const;
 
 // ── 02 Interview themes (ranked by how often they came up) ───────

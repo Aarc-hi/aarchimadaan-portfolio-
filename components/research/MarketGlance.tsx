@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MARKET_STATS } from './thelaData';
-import { Chapter, useCountUp, useInViewOnce, useJump } from './shared';
+import { Chapter, useInViewOnce, useJump } from './shared';
 
 // The satellite photo (1242 x 696). It is turned a few degrees to straighten the market, then cropped to the same
 // 4:3 box as the sketch. The sketch below is drawn from the same photo, so the two line up when you switch between them:
@@ -14,17 +13,6 @@ const SATELLITE = {
 const SAT_H = SATELLITE.crop.w * 0.75;
 
 type Focus ='opened' | 'shops' | 'area' | 'rent' | 'renovations' | 'stalls' | 'courtyard';
-
-const Stat: React.FC<{ s: typeof MARKET_STATS[number]; start: boolean }> = ({ s, start }) => {
-  const n = useCountUp(typeof s.value === 'number' ? s.value : 0, start);
-  const shown = typeof s.value === 'number' ? (s.id === 'area' ? n.toLocaleString('en-IN') : String(n)) : s.value;
-  return (
-    <span className="font-display text-3xl tracking-tight leading-none tabular-nums">
-      {shown}
-      {'unit' in s && s.unit ? <span className="text-lg ml-1">{s.unit}</span> : null}
-    </span>
-  );
-};
 
 // The sketch, or (overlay) just its highlights drawn over the satellite photo. In both, nothing is lit until a fact is hovered:
 // in the sketch the unlit parts stay as plain outlines, over the photo they are not drawn at all.
@@ -44,7 +32,6 @@ const Plan: React.FC<{ focus: Focus | null; overlay?: boolean; onHover: (f: Focu
   const north = Array.from({ length: 19 }, (_, i) => cell('n' + i, 30 + i * (279 / 19), 38, 279 / 19, 44));
   const south = Array.from({ length: 19 }, (_, i) => cell('s' + i, 30 + i * (282 / 19), 214, 282 / 19, 53));
   const east = Array.from({ length: 11 }, (_, i) => cell('e' + i, 312, 82 + i * (132 / 11), 43, 132 / 11));
-  const stalls = [[12, 110], [21, 122], [12, 134], [21, 146], [12, 158], [21, 170], [12, 182], [21, 194]]; // on the little sidewalk just west of the market, beside the empty lane
   return (
     <svg viewBox="0 0 400 300" className={overlay ? 'absolute inset-0 w-full h-full pointer-events-none' : 'w-full h-auto'} data-plan
       role={overlay ? undefined : 'img'} aria-label={overlay ? undefined : 'Schematic plan of Municipal Market'} aria-hidden={overlay || undefined}>
@@ -55,15 +42,13 @@ const Plan: React.FC<{ focus: Focus | null; overlay?: boolean; onHover: (f: Focu
           part of it), measured from the photo: x 60 to 283, y 104 to 193. */}
       <rect x="60" y="104" width="223" height="89" rx="2" strokeDasharray="4 4" strokeWidth="1.2" {...over('courtyard')}
         className={`transition-all duration-300 ${focus === 'courtyard' ? (overlay ? 'fill-cobalt/20 stroke-cobalt' : 'fill-cobalt/10 stroke-cobalt') : overlay ? OFF : 'fill-transparent stroke-black/30'}`} />
-      {(!overlay || focus === 'courtyard') && <text x="171" y="152" textAnchor="middle" style={{ ...halo, pointerEvents: 'none' }} className={`font-sans text-[10px] ${focus === 'courtyard' ? 'fill-cobalt' : 'fill-black/40'}`}>Parking courtyard</text>}
-      {/* a transparent patch around the stall dots, so they are easy to hover */}
-      <rect x="2" y="100" width="28" height="102" className="fill-transparent" {...over('stalls')} />
-      {stalls.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="5" {...over('stalls')} className={`transition-all duration-300 ${focus === 'stalls' ? 'fill-cobalt' : overlay ? 'fill-transparent' : 'fill-black/25'}`} />
-      ))}
-      {/* the label for the dots on the sidewalk, over them on two lines so it stays clear of the market's outline */}
-      {(!overlay || focus === 'stalls') && (
-        <text textAnchor="middle" style={{ ...halo, pointerEvents: 'none' }} className={`font-sans text-[8px] ${focus === 'stalls' ? 'fill-cobalt' : 'fill-black/40'}`}>
+      {!overlay && <text x="171" y="152" textAnchor="middle" style={{ ...halo, pointerEvents: 'none' }} className="font-sans text-[10px] fill-black/40">Parking courtyard</text>}
+      {/* the stalls and vendors on the little sidewalk just west of the market, beside the empty lane: one dashed box, like the courtyard's */}
+      <rect x="4" y="104" width="24" height="96" rx="2" strokeDasharray="4 4" strokeWidth="1.2" {...over('stalls')}
+        className={`transition-all duration-300 ${focus === 'stalls' ? (overlay ? 'fill-cobalt/20 stroke-cobalt' : 'fill-cobalt/10 stroke-cobalt') : overlay ? OFF : 'fill-transparent stroke-black/30'}`} />
+      {/* the label for the box on the sidewalk, over it on two lines so it stays clear of the market's outline */}
+      {!overlay && (
+        <text textAnchor="middle" style={{ ...halo, pointerEvents: 'none' }} className="font-sans text-[8px] fill-black/40">
           <tspan x="14" y="90">Stalls /</tspan><tspan x="14" y="99">vendors</tspan>
         </text>
       )}
@@ -79,8 +64,7 @@ const Plan: React.FC<{ focus: Focus | null; overlay?: boolean; onHover: (f: Focu
 };
 
 export const MarketGlance: React.FC = () => {
-  const [satellite, setSatellite] = useState(false);
-  const { ref, seen } = useInViewOnce<HTMLDivElement>(0.25);
+  const { ref } = useInViewOnce<HTMLDivElement>(0.25);
   // The plan (sketch or satellite) only lights up while the mouse is over a part of the plan itself (the facts on the left do
   // not light it). A jump from the evidence panel has no hover, so it lights the renovation rings on its own for a moment.
   const [mapHover, setMapHover] = useState<Focus | null>(null);
@@ -96,40 +80,14 @@ export const MarketGlance: React.FC = () => {
 
   return (
     <Chapter id="ch-market" n="01" kicker="Context" title="The market at a glance"
-      intro="Municipal Market, known as “MM” or Munshi’s Bazar, has been part of Ahmedabad’s **commercial and social life** for decades. Hover the plan to see its shops, stalls and courtyard.">
-      <div ref={ref} className="grid lg:grid-cols-[0.8fr_1.2fr] gap-6 lg:gap-10 items-start">
-        <div className="flex flex-col gap-7 lg:self-center">
-          {/* The facts are plain, still text (no boxes): nothing opens or moves when the mouse is over them. Each one shows its note. */}
-          {MARKET_STATS.map((s) => {
-            return (
-              <div key={s.id} className="text-left flex flex-col gap-1.5">
-                <div className="flex items-baseline justify-between gap-4">
-                  <Stat s={s} start={seen} />
-                  <span className="font-sans text-[11px] tracking-wide text-right">{s.label}</span>
-                </div>
-                <p className="font-sans text-[11px] leading-relaxed pt-1">{s.note}</p>
-                {s.id === 'rent' && (
-                  <div className="pt-3" aria-hidden="true">
-                    <div className="relative h-1.5 rounded-full bg-black/10">
-                      <div className="absolute inset-y-0 left-0 w-full rounded-full bg-cobalt" />
-                      <span className="absolute -top-1 left-0 w-3.5 h-3.5 rounded-full bg-cobalt" />
-                      <span className="absolute -top-1 right-0 w-3.5 h-3.5 rounded-full bg-cobalt" />
-                    </div>
-                    <div className="flex justify-between font-sans text-[11px] pt-2"><span>₹75</span><span>₹750</span></div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* no card and no padding around the map, so it gets the whole column (and the column is the wider one) */}
-        <div className="lg:sticky lg:top-6 lg:w-[74%] lg:ml-auto">
+      intro="Municipal Market, known as “MM” or Munshi’s Bazar, has been part of Ahmedabad’s **commercial and social life** for decades. It opened in the **1970s**, and its **49 small shops** stand on the north, east and south sides of a central courtyard, across about **7,000 m²**.">
+      <div ref={ref} className="flex flex-col gap-10 lg:gap-12">
+        {/* no card and no padding around the map, centred below the description */}
+        <div className="relative w-full lg:w-[68%] mx-auto">
           {/* The sketch, with the satellite photo fading in over it (straightened and cropped to the sketch's 4:3 box) */}
-          <div className="relative rounded-xl overflow-hidden">
-            <Plan focus={lit} onHover={setMapHover} />
+          <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
             <img src={SATELLITE.src} alt="Satellite view of Municipal Market" draggable={false} data-satellite
-              className={`absolute max-w-none select-none transition-opacity duration-500 ${satellite ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              className="absolute max-w-none select-none"
               style={{
                 width: `${(SATELLITE.w / SATELLITE.crop.w) * 100}%`,
                 left: `${-(SATELLITE.crop.x / SATELLITE.crop.w) * 100}%`,
@@ -137,23 +95,32 @@ export const MarketGlance: React.FC = () => {
                 transformOrigin: `${((SATELLITE.crop.x + SATELLITE.crop.w / 2) / SATELLITE.w) * 100}% ${((SATELLITE.crop.y + SAT_H / 2) / SATELLITE.h) * 100}%`,
                 transform: `rotate(${SATELLITE.rotate}deg)`,
               }} />
-            {/* a light border exactly the size of the satellite photo; only the sketch shows it (it fades out with the photo) */}
-            <div aria-hidden="true" className={`absolute inset-0 rounded-xl border border-black/15 pointer-events-none transition-opacity duration-500 ${satellite ? 'opacity-0' : 'opacity-100'}`} />
-            {/* the same highlights, drawn over the photo */}
-            <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${satellite ? 'opacity-100' : 'opacity-0'}`}>
+            {/* the highlights, drawn over the photo */}
+            <div className="absolute inset-0 pointer-events-none">
               <Plan focus={lit} onHover={setMapHover} overlay />
             </div>
           </div>
-          {/* Sketch  [switch]  Satellite */}
-          {/* on wide screens it hangs just below the map without adding to the column's height, so the facts centre on the sketch itself */}
-          <div className="flex items-center gap-3 pt-4 font-sans text-[11px] lg:absolute lg:left-0 lg:top-full">
-            <button type="button" onClick={() => setSatellite(false)} className={`transition-colors cursor-pointer ${!satellite ? 'text-cobalt' : 'opacity-60 hover:opacity-100'}`}>Sketch</button>
-            <button type="button" role="switch" aria-checked={satellite} aria-label="Satellite view" onClick={() => setSatellite((v) => !v)}
-              className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${satellite ? 'bg-cobalt' : 'bg-black/20'}`}>
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${satellite ? 'translate-x-5' : ''}`} />
-            </button>
-            <button type="button" onClick={() => setSatellite(true)} className={`transition-colors cursor-pointer ${satellite ? 'text-cobalt' : 'opacity-60 hover:opacity-100'}`}>Satellite</button>
+          {/* the names of the stalls and the parking courtyard sit outside the photo, in its margins, each with an arrow pointing to its place
+              (same 400 x 300 box as the plan, drawn past its edges) */}
+          <div aria-hidden="true" className="hidden lg:block absolute left-0 top-0 w-full aspect-[4/3] pointer-events-none">
+            <svg viewBox="0 0 400 300" className="w-full h-full overflow-visible">
+              {[
+                'M -30 152 L 6 152 M 0 146 L 7 152 L 0 158',
+                'M 408 152 L 272 152 M 279 146 L 271 152 L 279 158',
+                'M -30 60 L 44 60 M 38 54 L 45 60 L 38 66',
+              ].map((d) => (
+                <g key={d} fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={d} stroke="#fff" strokeWidth="3.6" />
+                  <path d={d} className="stroke-cobalt" strokeWidth="1.3" />
+                </g>
+              ))}
+              <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="150">Stalls /</tspan><tspan x="-35" y="160">vendors</tspan></text>
+              <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="63">Shops</tspan></text>
+              <text textAnchor="start" className="font-sans text-[7.5px] fill-cobalt"><tspan x="414" y="150">Parking</tspan><tspan x="414" y="160">area</tspan></text>
+            </svg>
           </div>
+          <p className="font-sans text-[11px] tracking-wide mt-4">Satellite view of the market</p>
+          <p className="font-sans text-[11px] tracking-wide text-cobalt mt-1">Hover the plan to see its shops, stalls and courtyard.</p>
         </div>
       </div>
     </Chapter>

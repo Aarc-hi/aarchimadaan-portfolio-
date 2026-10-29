@@ -9,9 +9,11 @@ import { Marked } from './Marked';
 import { FlipBook } from './FlipBook';
 import { ParkingGame } from './ParkingGame';
 import { SoundHint } from './SoundHint';
+import { ScentHint } from './ScentHint';
 import { AlignrCaseStudy, ALIGNR_NAV } from './alignr/AlignrCaseStudy';
-import { SlouchFigure } from './alignr/SlouchFigure';
 import { PenCaseStudy, PEN_NAV_A } from './penhospital/PenCaseStudy';
+import { SaxNotes } from './sonic/SaxNotes';
+import { SonicCaseStudy, SONIC_NAV, SONIC_AUDIO, SONIC_AMBIENT, SONIC_TRACKS } from './sonic/SonicCaseStudy';
 interface ProjectDetailViewProps {
   project: Project;
   setView: (view: ViewState) => void;
@@ -34,10 +36,18 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
   const isPawly = project.id === 'p4';
   const isAlignr = project.id === 'p2';   // Alignr has its own sections too (components/alignr), with a figure to play with beside the title
   const isPen = project.id === 'p5';      // The Pen Hospital has its own sections too (components/penhospital)
+  const isSonic = project.id === 'p3';    // Sonic has two sections of its own, between the concept and the magazine (components/sonic)
   const showIntro = project.id !== 'p1' && !isPawly && !isAlignr && !isPen;
   // ...and shows its research question as the heading above its findings, with its team, role and date beside the title.
   const questionInHeader = project.id === 'p1' && !!project.researchQuestion;
   const noProblem = project.id === 'p3'; // Sonic has no problem statement section
+
+  // Sonic's contents and genre panels open the magazine at a spread: the book turns to it and the page scrolls down to the book
+  const [bookJump, setBookJump] = useState<{ spread: number; id: number } | null>(null);
+  const openSpread = (spread: number) => {
+    setBookJump({ spread, id: Date.now() });
+    document.querySelector('[role="button"][aria-label*="Click to turn the page"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const openLightbox = (index: number) => setLightboxIndex(index);
   const closeLightbox = () => setLightboxIndex(null);
@@ -120,7 +130,9 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
     ...tldrNav,
     ...(isAlignr ? ALIGNR_NAV : []),
     ...(isPen ? PEN_NAV_A : []),
-    ...(showIntro ? [{ id: 'overview', label: 'Overview' }, { id: 'concept', label: 'Concept' }] : []),
+    // Sonic has no separate Overview: what it says is part of its Concept
+    ...(showIntro ? [...(isSonic ? [] : [{ id: 'overview', label: 'Overview' }]), { id: 'concept', label: 'Concept' }] : []),
+    ...(isSonic ? SONIC_NAV : []),
     ...(noProblem || project.id === 'p1' || isAlignr || isPen ? [] : [{ id: 'problem', label: project.researchQuestion ? 'Research' : 'Problem' }]),
     // on Thela the research question comes right after the market chapter, inside the findings
     ...(project.id === 'p1' ? [{ id: 'findings', label: 'Findings' }, ...RESEARCH_NAV.flatMap((c) => c.id === 'ch-market' ? [{ ...c, sub: true }, { id: 'problem', label: 'Research', sub: true }] : [{ ...c, sub: true }])] : []),
@@ -264,44 +276,56 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
         >
           <div className="max-w-6xl mx-auto">
           <div className={`mb-24 flex flex-col gap-8 ${questionInHeader ? 'md:flex-row md:items-end md:justify-between' : ''} ${isAlignr ? 'relative' : ''}`}>
-            <div className="flex flex-col gap-6 shrink-0">
-              <h1 className="text-5xl md:text-8xl capitalize w-min text-left font-display font-medium tracking-tight leading-[0.9] text-ink">
-                {project.title}
+            <div className="relative flex flex-col gap-6 shrink-0">
+              {/* the title breaks at every space, unless the project says where its lines break (The Pen / Hospital) */}
+              <h1 className={`text-5xl md:text-8xl capitalize ${project.titleLines ? 'w-max max-w-full' : 'w-min'} text-left font-display font-medium tracking-tight leading-[0.9] text-ink`}>
+                {project.titleLines ? project.titleLines.map((l, i) => <React.Fragment key={l}>{i > 0 && <br />}{l}</React.Fragment>) : project.title}
               </h1>
-              {!questionInHeader && (
-              <div className="flex flex-wrap gap-4 font-sans font-bold tracking-wide text-lg">
-                <span className="bg-cobalt text-white px-3 py-1">{project.year}</span>
-                <span className="border-2 border-black bg-paper px-3 py-1 text-ink">{project.category}</span>
+              {/* who worked on it, what the designer did and when, on one line under the title: each as its name, a dot, then the answer */}
+              <div className="flex flex-wrap items-baseline gap-x-10 gap-y-2 font-sans text-ink">
+                {([['Group', project.group], ['My role', project.myRole], ['Date', project.date]] as const).filter(([, v]) => !!v).map(([k, v]) => (
+                  <span key={k} className="inline-flex items-baseline gap-2.5">
+                    <span className="text-lg leading-snug text-cobalt">{k}</span>
+                    <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-cobalt self-center shrink-0" />
+                    <span className="text-lg leading-snug">{v}</span>
+                  </span>
+                ))}
               </div>
+              {/* a line under the tags, for a project that has sound (Sonic): a small speaker, then the line. On wide screens it sits in the
+                  empty space between the tags and the tl;dr without taking any room of its own, so it never moves the tl;dr down. */}
+              {project.headerNote && (
+                <p className="font-sans text-lg font-normal text-cobalt flex items-start gap-3 max-w-[44rem] leading-snug sm:absolute sm:left-0 sm:top-full sm:mt-5 sm:w-max sm:max-w-[min(44rem,calc(100vw-8rem))]">
+                  <svg className="shrink-0 mt-[3px]" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8v4h3l5 4V4L6 8H3z" fill="currentColor" /><path d="M14 7.2c1.3 1.5 1.3 4.1 0 5.6M16.4 4.8c2.5 3 2.5 7.4 0 10.4" /></svg>
+                  <span>{project.headerNote}</span>
+                </p>
               )}
             </div>
-            {/* Thela Thaila Thikana lists its team, role and date as plain lines, pushed to the right margin along the title's bottom edge */}
-            {questionInHeader && (
-              <div className="flex flex-col gap-4 font-sans text-lg text-left md:pb-2">
-                <div><p className="text-[11px] leading-none tracking-wide mb-1">Group</p><p className="leading-snug">6 people</p></div>
-                <div><p className="text-[11px] leading-none tracking-wide mb-1">My role</p><p className="leading-snug">Research and creatives</p></div>
-                <div><p className="text-[11px] leading-none tracking-wide mb-1">Date</p><p className="leading-snug">March 2025</p></div>
-              </div>
-            )}
           </div>
 
           {/* TL;DR: the first thing on every project page */}
           {project.tldr && (
-            <section id="tldr" className={project.tldrImage || isAlignr ? 'scroll-mt-32 mb-24 sm:-mt-16' : 'scroll-mt-32 mb-24 md:mb-32'}>
-              <div className={project.tldrImage || isAlignr ? 'grid gap-10 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-2 lg:gap-16 items-end' : ''}>
+            <section id="tldr" className={project.tldrImage ? 'scroll-mt-32 mb-24 sm:-mt-16' : 'scroll-mt-32 mb-24 md:mb-32'}>
+              <div className={project.tldrImage ? 'grid gap-10 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-2 lg:gap-16 items-end' : ''}>
                 <div className="sm:-mb-2">
                   <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">tl;dr</h2>
                   <p className="font-sans text-lg leading-relaxed"><Marked text={project.tldr} /></p>
                 </div>
                 {/* the full orange cat: the front panel of the pack, on the right of the tl;dr */}
-                {/* Alignr: the stick figure to play with takes the cat's place, on the right of the tl;dr and rising up beside the name */}
-                {isAlignr && <SlouchFigure className="justify-self-end sm:-mt-[110px] sm:-mb-[13px] w-full max-w-[460px]" />}
-                {project.tldrImage && <img src={project.tldrImage} alt={`${project.title}, the front of the pack`} className="block justify-self-center sm:-mt-[110px]" style={{ width: 'min(100%, 293px, calc(62vh * 0.6971))', height: 'auto' }} />}
+                {/* the picture is as tall as Pawly's cat (420px, or 62% of the screen if that is less), and as wide as its own shape makes it */}
+                {project.tldrImage && (
+                  <div className="relative justify-self-center sm:-mt-[110px]" style={{ width: `min(100%, calc(min(420px, 62vh) * ${project.tldrImageAspect ?? 0.6971}))` }}>
+                    {/* a soft shadow on the ground under the picture, where it rests (a long ellipse that fades out at its edges) */}
+                    {project.tldrImageShadow && <span aria-hidden="true" className="absolute pointer-events-none" style={{ left: '4%', width: '88%', bottom: '-11px', height: '24px', background: 'radial-gradient(ellipse at 45% 50%, rgba(26,26,26,0.34) 0%, rgba(26,26,26,0.16) 42%, rgba(26,26,26,0) 72%)', filter: 'blur(2.5px)', zIndex: 0 }} />}
+                    <img src={encodeURI(project.tldrImage)} alt={project.tldrImageAlt ?? `${project.title}, the front of the pack`} className="relative block w-full h-auto" style={{ zIndex: 1 }} />
+                    {project.tldrImageNotes && <SaxNotes />}
+                  </div>
+                )}
               </div>
             </section>
           )}
 
           {showIntro && (<>
+          {!isSonic && (
           <section id="overview" className="scroll-mt-32 mb-32">
             <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Overview</h2>
             <div className="text-lg font-sans leading-relaxed space-y-6">
@@ -310,6 +334,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
               ))}
             </div>
           </section>
+          )}
 
           <section id="concept" className="scroll-mt-32 mb-32">
             <h2 className="font-display font-normal tracking-wide text-lg leading-[1.1] mb-8 pb-3 border-b border-cobalt/25 text-cobalt">Concept</h2>
@@ -323,6 +348,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
           {isPawly && <PawlyCaseStudy />}
           {isAlignr && <AlignrCaseStudy />}
           {isPen && <PenCaseStudy />}
+          {isSonic && <SonicCaseStudy onOpen={openSpread} />}
 
           {!questionInHeader && !isPawly && !isAlignr && !isPen && !noProblem && (
           <section id="problem" className="scroll-mt-32 mb-32">
@@ -455,8 +481,11 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({ project, s
 
                 {/* The whole magazine, flipped by clicking */}
                 {project.book && project.book.length > 1 && <FlipBook faces={project.book.map((s) => encodeURI(s))} alt={`${project.title} ${project.category.toLowerCase().includes('zine') ? 'zine' : 'magazine'}`}
-                  spreadOverlays={project.id === 'p1' ? { 2: <SoundHint />, 5: <ParkingGame parked={carParked} onParked={setCarParked} /> } : undefined}
-                  spreadAudio={project.id === 'p1' ? { 2: encodeURI('/Municipal market/audio/market-sound.mp3') } : undefined} />}
+                  spreadOverlays={project.id === 'p1' ? { 2: <SoundHint />, 5: <ParkingGame parked={carParked} onParked={setCarParked} />, 7: <ScentHint /> } : undefined}
+                  spreadAudio={project.id === 'p1' ? { 2: encodeURI('/Municipal market/audio/market-sound.mp3') } : isSonic ? SONIC_AUDIO : undefined}
+                  ambientAudio={isSonic ? SONIC_AMBIENT : undefined}
+                  trackInfo={isSonic ? SONIC_TRACKS : undefined}
+                  jumpTo={bookJump} />}
 
                 {/* Placeholder Fallback */}
                 {!(project.images?.length) && !(project.mockups?.length) && !(project.pages?.length) && !(project.book?.length) && (

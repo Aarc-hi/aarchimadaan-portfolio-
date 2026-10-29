@@ -13,22 +13,35 @@ export const ThemeExplorer: React.FC = () => {
     if (jumpKey && THEMES.some((t) => t.id === jumpKey.key)) setSel(jumpKey.key);
   }, [jumpKey]);
 
+  // Left alone, it moves through the seven themes by itself, on a loop, so it is clear that it changes. While the mouse is
+  // over it (or a theme has the focus) it waits on the one you chose, and it carries on when the mouse leaves.
+  const [hold, setHold] = useState(false);
+  useEffect(() => {
+    if (hold) return;
+    const t = window.setTimeout(() => setSel((cur) => THEMES[(Math.max(0, THEMES.findIndex((x) => x.id === cur)) + 1) % THEMES.length].id), 2600);
+    return () => window.clearTimeout(t);
+  }, [hold, sel]);
+
   const rows = THEMES; // all seven, ranked (the Steady / Concerned filter buttons are gone)
 
   return (
     <Chapter id="ch-interviews" n="02" kicker="Interviews" title="What people told us"
       intro="**Seven themes** came up in the interviews, ranked here by **how often they recurred**. Hover one to see who raised it. The ranking is by recurrence, not by an exact count.">
-      <div className="grid lg:grid-cols-[1fr_1.1fr] gap-6 items-start">
+      <div className="grid lg:grid-cols-[1fr_1.1fr] gap-6 items-start" onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} onFocus={() => setHold(true)} onBlur={() => setHold(false)}>
         <div className="flex flex-col gap-1 lg:pr-12"> {/* the right padding shortens the bars, leaving a gap before the quotes beside them */}
-          {/* the themes are plain rows (no card behind them); the open one is shown in blue */}
+          {/* the themes are plain rows (no card behind them); the open one is shown in blue and full strength, the others are faded.
+              A vertical slider on the left (a thin rail and a blue thumb that slides to the open row) replaces the numbers. */}
+          <div className="relative pl-6 flex flex-col">
+            <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-px bg-black/15" />
+            <span aria-hidden="true" className="absolute -left-px w-[3px] rounded-full bg-cobalt"
+              style={{ top: `${(Math.max(0, THEMES.findIndex((x) => x.id === sel)) / THEMES.length) * 100}%`, height: `${100 / THEMES.length}%`, transition: 'top 600ms cubic-bezier(.22,1,.36,1)' }} />
           {rows.map((t) => {
             const on = t.id === sel;
             const glow = EVIDENCE[t.id] !== undefined && active === EVIDENCE[t.id];
             return (
               <button key={t.id} type="button" onMouseEnter={() => setSel(t.id)} onFocus={() => setSel(t.id)} onClick={() => setSel(t.id)}
-                className={`text-left py-2 transition-all duration-300 ${on ? '' : 'opacity-80 hover:opacity-100'} ${glow ? glowClass : ''}`}>
+                className={`text-left py-2 transition-all duration-500 ${on ? 'opacity-100' : 'opacity-35 hover:opacity-70'} ${glow ? glowClass : ''}`}>
                 <div className="flex items-center gap-3">
-                  <span className={`font-display text-lg w-6 tabular-nums ${on ? 'text-cobalt' : 'opacity-40'}`}>{t.rank}</span>
                   <div className="flex-1 min-w-0">
                     <p className={`font-display text-lg tracking-tight leading-tight transition-colors ${on ? 'text-cobalt' : ''}`}>{t.name}</p>
                     <div className="mt-1.5 h-1 rounded-full bg-black/10 overflow-hidden" aria-hidden="true">
@@ -39,6 +52,7 @@ export const ThemeExplorer: React.FC = () => {
               </button>
             );
           })}
+          </div>
           <p className={`${labelCls} pt-2`}>Longer bar = came up more often</p>
         </div>
 

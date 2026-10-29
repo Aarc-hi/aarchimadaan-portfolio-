@@ -59,7 +59,7 @@ const HERO_ROLL_MS = 220;                          // how long one word takes to
 const hero_hold = (k: number) => 300 + 320 * Math.pow(k / HERO_LAST_IDX, 2); // 300ms at the start, easing to 620ms
 const HERO_REEL_MASK = "linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%)";
 
-const INTRO = "Hi, I'm Aarchi - a brand & interaction designer. I turn messy problems into experiences people get right away. Find me a problem worth solving, put my music on, and I disappear until it's done.";
+const INTRO = "Hi, I'm Aarchi, a brand and interaction designer. I turn complex problems into clear, intuitive experiences, taking each project from the first idea to the finished product.";
 
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;

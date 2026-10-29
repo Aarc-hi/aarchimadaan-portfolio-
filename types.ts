@@ -20,6 +20,14 @@ export interface Project {
   concept?: string;
   researchQuestion?: string;
   tldrImage?: string;   // optional picture shown on the right of the tl;dr
+  tldrImageAspect?: number;  // its width over its height (Pawly's cat is 0.6971); the picture is shown the same height as the cat, whatever its shape
+  tldrImageAlt?: string;
+  tldrImageShadow?: boolean;   // a soft shadow on the ground under the picture
+  group?: string;              // who worked on it ("6 people"), shown under the title with the role and the date
+  myRole?: string;             // what the designer did on it
+  titleLines?: string[];       // where the big title breaks into lines, when it should not break at every space
+  headerNote?: string;        // a line under the year and category at the top of the project page
+  tldrImageNotes?: boolean;    // musical notes come out of the saxophone's bell while the magazine's music plays (Sonic)
   tldr?: string;   // the short summary at the very top of the project page
   images?: string[];
   mockups?: string[];

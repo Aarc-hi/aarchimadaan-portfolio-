@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Marked } from '../Marked';
 import { Block, labelCls } from '../pawly/shared';
 
@@ -25,6 +25,14 @@ const POSTURES = [
 const PostureSlider: React.FC = () => {
   const [i, setI] = useState(POSTURES.length - 1);
   const track = useRef<HTMLDivElement>(null);
+  // Left alone, it goes through the four postures by itself, on a loop, so it is clear that it changes. While the mouse is over it
+  // (or the slider has the focus) it waits on the one you chose, and it carries on when you move away.
+  const [hold, setHold] = useState(false);
+  useEffect(() => {
+    if (hold) return;
+    const t = window.setTimeout(() => setI((c) => (c + 1) % POSTURES.length), 4000);
+    return () => window.clearTimeout(t);
+  }, [hold, i]);
   const near = (clientX: number) => {
     const r = track.current!.getBoundingClientRect();
     const f = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
@@ -33,7 +41,8 @@ const PostureSlider: React.FC = () => {
   const at = (n: number) => `${(n / (POSTURES.length - 1)) * 100}%`;
 
   return (
-    <div className="grid md:grid-cols-[minmax(0,170px)_minmax(0,1fr)] gap-10 md:gap-24 items-start">
+    <div className="grid md:grid-cols-[minmax(0,170px)_minmax(0,1fr)] gap-10 md:gap-24 items-start"
+      onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} onFocus={() => setHold(true)} onBlur={() => setHold(false)}>
       <div>
         {/* the pictures, all in one cell: the chosen one is solid, the others are faint */}
         <div className="grid">

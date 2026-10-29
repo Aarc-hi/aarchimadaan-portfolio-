@@ -19,6 +19,7 @@ import { CustomCursor } from './components/CustomCursor';
 import { SpotifyCode } from './components/SpotifyCode';
 import { BasedInMap } from './components/BasedInMap';
 import { CatLogue } from './components/CatLogue';
+import { AlbumStrip } from './components/AlbumStrip';
 import { ContactView } from './components/ContactView';
 
 const PLAYLIST_URL = 'https://open.spotify.com/playlist/098sNOxCkIM7XVHLDCM9TL';
@@ -179,7 +180,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="col-span-2 row-span-2 min-[1152px]:col-span-1 min-[1152px]:col-start-3 min-[1152px]:row-start-1 bg-paper shadow-[0_8px_24px_rgba(0,0,0,0.08)] rounded-2xl p-6 md:p-8 flex flex-col">
+                  <div className="col-span-2 row-span-2 min-[1152px]:col-span-1 min-[1152px]:col-start-3 min-[1152px]:row-start-2 bg-paper shadow-[0_8px_24px_rgba(0,0,0,0.08)] rounded-2xl p-6 md:p-8 flex flex-col">
                     <span className="font-sans text-xs tracking-wide opacity-50 mb-2">Experience</span>
                     <div className="flex flex-col">
                       {EXPERIENCES.map((exp, idx) => (
@@ -207,8 +208,8 @@ const App: React.FC = () => {
                       <span className="font-sans text-xs tracking-wide opacity-50">Soundtrack</span>
                       <div className="relative h-[52px] [perspective:600px]">
                         <div className="absolute inset-0 flex flex-col justify-end [backface-visibility:hidden] transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] [transform:translateZ(-26px)_rotateX(0deg)_translateZ(26px)] opacity-100 group-hover:[transform:translateZ(-26px)_rotateX(90deg)_translateZ(26px)] group-hover:opacity-0">
-                          <p className="font-display text-xl md:text-2xl tracking-tight truncate">Model</p>
-                          <p className="font-sans text-xs opacity-50 mt-0.5">Playlist · Spotify</p>
+                          <p className="font-display text-xl md:text-2xl tracking-tight truncate">Model - playlist</p>
+                          <p className="font-sans text-xs opacity-50 mt-0.5">Listen on Spotify</p>
                         </div>
                         <div className="absolute inset-0 flex items-center [backface-visibility:hidden] transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] [transform:translateZ(-26px)_rotateX(-90deg)_translateZ(26px)] opacity-0 group-hover:[transform:translateZ(-26px)_rotateX(0deg)_translateZ(26px)] group-hover:opacity-100">
                           <SpotifyCode className="h-[52px] w-auto max-w-full overflow-visible" />
@@ -219,13 +220,17 @@ const App: React.FC = () => {
                       <ArrowUpRight className="w-6 h-6 text-cobalt transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.5} />                    </div>
                   </a>
 
-                  <button
-                    onClick={() => setView('CONTACT')}
-                    className="group min-[1152px]:col-start-3 min-[1152px]:row-start-3 w-[104px] h-[104px] min-[1152px]:w-[140px] min-[1152px]:h-[140px] bg-cobalt text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] rounded-2xl p-3 min-[1152px]:p-4 flex flex-col justify-between items-start text-left"
-                  >
-                    <ArrowUpRight className="self-end w-6 h-6 min-[1152px]:w-7 min-[1152px]:h-7 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.5} />
-                    <span className="font-display text-lg md:text-xl tracking-tight">Connect</span>
-                  </button>
+                  {/* the top of the third column, above the Experience tile: the strip of album covers, and on its right the Connect tile */}
+                  <div className="col-span-2 min-[1152px]:col-span-1 min-[1152px]:col-start-3 min-[1152px]:row-start-1 min-w-0 flex gap-4 min-[1152px]:gap-6 items-stretch">
+                    <AlbumStrip />
+                    <button
+                      onClick={() => setView('CONTACT')}
+                      className="group flex-none w-[104px] h-[104px] min-[1152px]:w-[140px] min-[1152px]:h-[140px] bg-cobalt text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] rounded-2xl p-3 min-[1152px]:p-4 flex flex-col justify-between items-start text-left"
+                    >
+                      <ArrowUpRight className="self-end w-6 h-6 min-[1152px]:w-7 min-[1152px]:h-7 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.5} />
+                      <span className="font-display text-lg md:text-xl tracking-tight">Connect</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
