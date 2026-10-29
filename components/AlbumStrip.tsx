@@ -6,14 +6,14 @@ import React, { useEffect, useState } from 'react';
 // album's name on a plain square instead.
 type Album = { id: number; name: string; artist: string };
 
-// in the order they were listed (the albums whose cover could not be found in the catalogue are still to come: Raani, and the two by
-// Peter Cat Recording Co.)
+// in the order they were listed (the two albums by Peter Cat Recording Co. are still to come: their covers are not in the catalogue)
 const ALBUMS: Album[] = [
   { id: 1695979461, name: 'Sunburn', artist: 'Dominic Fike' },
   { id: 601140186, name: 'Comedown Machine', artist: 'The Strokes' },
   { id: 1441164426, name: 'Abbey Road', artist: 'The Beatles' },
   { id: 1786351934, name: 'Awaaz', artist: 'Darzi' },
   { id: 1441133180, name: 'The Beatles (The White Album)', artist: 'The Beatles' },
+  { id: 1878564522, name: 'Raani', artist: 'Shashwat Bulusu' },
   { id: 1623929720, name: 'French Exit', artist: 'TV Girl' },
   { id: 1448478213, name: 'Jaago', artist: 'Lifafa' },
   { id: 1109714933, name: 'In Rainbows', artist: 'Radiohead' },
@@ -53,6 +53,10 @@ export const AlbumStrip: React.FC = () => {
         {ALBUMS.map((a) => cover(a, 0))}
         {ALBUMS.map((a) => cover(a, 1))}
       </div>
+      {/* the name of the tile, in the same pill as "cat-a-logue" on the cat photo; it stays put while the covers slide behind it */}
+      <span className="absolute left-3 bottom-3 z-10 bg-paper rounded-full px-3 py-1 font-display text-xs min-[1152px]:text-sm tracking-tight shadow-[0_2px_8px_rgba(0,0,0,0.12)] pointer-events-none">
+        discography
+      </span>
       <style>{`@keyframes albumSlide { from { transform: translateX(0) } to { transform: translateX(-50%) } }
       .album-strip:hover .album-track { animation-play-state: paused }
       @media (prefers-reduced-motion: reduce) { .album-track { animation: none !important } }`}</style>

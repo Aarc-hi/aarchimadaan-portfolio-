@@ -104,18 +104,22 @@ export const MarketGlance: React.FC = () => {
               (same 400 x 300 box as the plan, drawn past its edges) */}
           <div aria-hidden="true" className="hidden lg:block absolute left-0 top-0 w-full aspect-[4/3] pointer-events-none">
             <svg viewBox="0 0 400 300" className="w-full h-full overflow-visible">
-              {[
-                'M -30 152 L 6 152 M 0 146 L 7 152 L 0 158',
-                'M 408 152 L 272 152 M 279 146 L 271 152 L 279 158',
-                'M -30 60 L 44 60 M 38 54 L 45 60 L 38 66',
-              ].map((d) => (
+              {([
+                { d: 'M -30 152 L 6 152 M 0 146 L 7 152 L 0 158', w: 1.3 },
+                { d: 'M 408 152 L 272 152 M 279 146 L 271 152 L 279 158', w: 1.3 },
+                { d: 'M -30 60 L 44 60 M 38 54 L 45 60 L 38 66', w: 1.3 },
+                { d: 'M -30 103 L 14 103 M 7 97 L 15 103 L 7 109', w: 0.8 },       // Entry: the way in, at the upper opening of the lane: the arrow points into the market
+                { d: 'M 15 208 L -30 208 M -22 202 L -30 208 L -22 214', w: 0.8 },   // Exit: the way out, at the lower opening: the arrow points out of the market
+              ] as { d: string; w: number }[]).map(({ d, w }) => (
                 <g key={d} fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={d} stroke="#fff" strokeWidth="3.6" />
-                  <path d={d} className="stroke-cobalt" strokeWidth="1.3" />
+                  <path d={d} stroke="#fff" strokeWidth={w + 2.3} />
+                  <path d={d} className="stroke-cobalt" strokeWidth={w} />
                 </g>
               ))}
               <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="150">Stalls /</tspan><tspan x="-35" y="160">vendors</tspan></text>
               <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="63">Shops</tspan></text>
+              <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="106">Entry</tspan></text>
+              <text textAnchor="end" className="font-sans text-[7.5px] fill-cobalt"><tspan x="-35" y="211">Exit</tspan></text>
               <text textAnchor="start" className="font-sans text-[7.5px] fill-cobalt"><tspan x="414" y="150">Parking</tspan><tspan x="414" y="160">area</tspan></text>
             </svg>
           </div>
